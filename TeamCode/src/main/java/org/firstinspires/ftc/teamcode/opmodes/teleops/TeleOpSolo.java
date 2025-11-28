@@ -18,7 +18,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.commands.TeleOpDriveCommand;
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
-import org.firstinspires.ftc.teamcode.subsystems.cds.CDS;
 import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDriveOTOS;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
@@ -112,7 +111,7 @@ public class TeleOpSolo extends CommandOpMode {
         telemetry.addData("Is Gamepad On: ", drive.isGamepadOn);
         telemetry.update();
         TelemetryPacket packet = new TelemetryPacket();
-        packet.put("ShooterVelocity", shooter.getLibVelocity());
+        packet.put("ShooterVelocity", shooter.getVelocity());
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }
