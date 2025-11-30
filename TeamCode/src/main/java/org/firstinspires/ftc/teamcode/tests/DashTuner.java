@@ -112,11 +112,12 @@ public class DashTuner extends LinearOpMode {
                     if (slaveTo[i] != -1) {
                         if (closeLoop[i])
                             motors[i].setPower(-pidControllers[(int) slaveTo[i]].calculate(motors[(int)
-                                slaveTo[i]].getVelocity(), motorTarget[(int) slaveTo[i]]));
+                                    slaveTo[i]].getVelocity(), motorTarget[(int) slaveTo[i]]));
                         else
                             motors[i].setPower(-motorTarget[(int) slaveTo[i]]);
+                        continue;
                     }
-                    if (closeLoop[i] && isVelocityCloseLoop[i] && slaveTo[i] == -1) {
+                    if (closeLoop[i] && isVelocityCloseLoop[i]) {
                         pidControllers[i].setPID(PIDs[i].kP, PIDs[i].kI, PIDs[i].kD);
 
                         double v = motors[i].getVelocity();
@@ -129,7 +130,7 @@ public class DashTuner extends LinearOpMode {
 
                         dashboard.sendTelemetryPacket(packet);
                     }
-                    if (closeLoop[i] && !isVelocityCloseLoop[i] && slaveTo[i] == -1) {
+                    if (closeLoop[i] && !isVelocityCloseLoop[i]) {
                         pidControllers[i].setPID(PIDs[i].kP, PIDs[i].kI, PIDs[i].kD);
 
                         double pos = motors[i].getCurrentPosition();
@@ -142,7 +143,7 @@ public class DashTuner extends LinearOpMode {
 
                         dashboard.sendTelemetryPacket(packet);
                     }
-                    if (!closeLoop[i] && slaveTo[i] != -1) {
+                    if (!closeLoop[i]) {
                         motors[i].setPower(motorTarget[i]);
                         double v = motors[i].getVelocity();
 
