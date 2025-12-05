@@ -10,10 +10,10 @@ public class Intake extends SubsystemBase {
     public final DcMotor intakeMotor;
 
     public static boolean isRunning = false;
+    public static boolean isShooting = false;
 
     public Intake(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotor.class, IntakeConstants.intakeMotorName);
-
         intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
@@ -25,10 +25,21 @@ public class Intake extends SubsystemBase {
         return isRunning;
     }
 
+    public void toggleShooting() {
+        isShooting = !isShooting;
+    }
+
+    public boolean isShooting() {
+        return isShooting;
+    }
+
     @Override
     public void periodic() {
         if (isRunning) {
-            intakeMotor.setPower(IntakeConstants.intakePower);
+            if (isShooting)
+                intakeMotor.setPower(IntakeConstants.transitPower);
+            else
+                intakeMotor.setPower(IntakeConstants.intakePower);
         }
         else {
             intakeMotor.setPower(0);

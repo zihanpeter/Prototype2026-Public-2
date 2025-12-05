@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.utils.Util;
 
 public class Shooter extends SubsystemBase {
     public final DcMotorEx rightShooter;
+    public final DcMotorEx leftShooter;
     public final Servo shooterServo;
     public final TelemetryPacket packet = new TelemetryPacket();
     public static boolean readyToShoot = false;
@@ -24,8 +25,8 @@ public class Shooter extends SubsystemBase {
 
     public Shooter(final HardwareMap hardwareMap) {
         rightShooter = hardwareMap.get(DcMotorEx.class, ShooterConstants.rightShooterName);
+        leftShooter = hardwareMap.get(DcMotorEx.class, ShooterConstants.leftShooterName);
         shooterServo = hardwareMap.get(Servo.class, ShooterConstants.shooterServoName);
-        rightShooter.setDirection(DcMotorSimple.Direction.REVERSE);
         pidController = new PIDController(ShooterConstants.kP,
                 ShooterConstants.kI, ShooterConstants.kD);
     }
@@ -60,13 +61,12 @@ public class Shooter extends SubsystemBase {
     @Override
     public void periodic() {
         if (shooterState != ShooterState.STOP) {
-            double currentPower = pidController.calculate(
-                    rightShooter.getVelocity(), shooterState.shooterVelocity);
-            rightShooter.setPower(currentPower);
-            packet.put("currentPower", currentPower);
+            leftShooter.setPower(1);
+            rightShooter.setPower(-1);
         }
         else {
-            rightShooter.setPower(ShooterState.STOP.shooterVelocity);
+            leftShooter.setPower(ShooterState.STOP.shooterVelocity);
+            rightShooter.setPower(-ShooterState.STOP.shooterVelocity);
         }
 
         shooterServo.setPosition(shooterState.shooterServoPos);

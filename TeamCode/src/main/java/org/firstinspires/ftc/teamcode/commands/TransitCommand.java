@@ -22,15 +22,15 @@ public class TransitCommand extends CommandBase {
         if (shooter.isShooterAtSetPoint() && shooter.shooterState != Shooter.ShooterState.STOP) {
             transit.setTransitState(Transit.TransitState.UP);
         }
-        else {
-            transit.setTransitState(Transit.TransitState.DOWN);
-        }
+
         if (!intake.isRunning()) intake.toggle();
+        if (!intake.isShooting()) intake.toggleShooting();
     }
 
     @Override
     public void end(boolean interrupted) {
         transit.setTransitState(Transit.TransitState.DOWN);
         if (intake.isRunning()) intake.toggle();
+        if (intake.isShooting()) intake.toggleShooting();
     }
 }
