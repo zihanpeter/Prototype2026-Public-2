@@ -23,8 +23,8 @@ public class ShooterConstants {
      * Max TPS = (6000 / 60) * 28 = 2800 TPS
      */
     public static double stopVelocity = 0;
-    public static double fastVelocity = -2100; // ~80% power
-    public static double midVelocity = -1300; // ~55% power
+    public static double fastVelocity = -1400; // ~80% power
+    public static double midVelocity = -1250; // ~55% power
     public static double slowVelocity = -1000;
     public static double releaseVelocity = -200;
     
@@ -33,6 +33,7 @@ public class ShooterConstants {
     public static double toleranceFast = 20;
     public static double toleranceSlow = 300;
 
-    public static double shooterServoUpPos = 0.59;
-    public static double shooterServoDownPos = 0.1;
+    public static double shooterServoUpPos = 0.85;
+    public static double shooterServoMidPos = 0.54; // Assuming halfway or specific mid value
+    public static double shooterServoDownPos = 0.23;
 }

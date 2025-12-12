@@ -14,7 +14,7 @@ public class DriveConstants {
     public static String rightBackMotorName = "rightBackMotor";
 
     public static double xPoseDW = 0, yPoseDW = 0;
-    public static double xPoseOTOS = Units.mmToInches(-173), yPoseOTOS = 0, headingPoseOTOS = Math.PI / 2;
+    public static double xPoseOTOS = Units.mmToInches(-173), yPoseOTOS = 0, headingPoseOTOS = -Math.PI / 2;
 
     public static double strafingBalance = 1.1;
     public static double headingEpsilon = 0.1;
@@ -22,7 +22,7 @@ public class DriveConstants {
     public static AngleUnit angleUnit = AngleUnit.RADIANS;
 
     public static double linearScalar = -1.1404723265, angularScalar = 0.99446;
-    public static double forwardVelocity = 63.966, strafeVelocity = 26.744;
+    public static double forwardVelocity = 80.198152, strafeVelocity = 66.5127;
     public static double forwardAcceleration = -32.6419, strafeAcceleration = -95.1316;
 
     public static double kP_xy = 0.02;

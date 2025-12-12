@@ -72,9 +72,9 @@ public class TeleOpSolo extends CommandOpMode {
         );
         */
 
-        // Slow Shoot (Left Trigger)
+        // Slow Shoot (Right Trigger)
         new FunctionalButton(
-                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.5
+                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= 0.5
         ).whenHeld(
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW))
         ).whenReleased(
@@ -99,11 +99,37 @@ public class TeleOpSolo extends CommandOpMode {
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
         );
 
-        // Transit
+        // Transit (Left Trigger) - This handles the transit firing sequence
         new FunctionalButton(
-                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= 0.5
+                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.3
         ).whenHeld(
                 new TransitCommand(transit, intake, shooter)
+        );
+
+        // Reverse Intake (D-Pad Right)
+        new FunctionalButton(
+                () -> gamepadEx1.getButton(GamepadKeys.Button.DPAD_RIGHT)
+        ).whenHeld(
+                new InstantCommand(() -> intake.setReversed(true))
+        ).whenReleased(
+                new InstantCommand(() -> intake.setReversed(false))
+        );
+
+        // Intake Full Power (Left Trigger) - Also runs intake at full power when firing
+        // Since we are using TransitCommand which might control Intake, we need to check if we want
+        // separate control or if TransitCommand handles it.
+        // Actually, user asked: "Left trigger pressed -> Intake Full Power".
+        // And Left Trigger is ALSO Transit/Fire.
+        // So when firing, intake should be full power.
+        // TransitCommand uses 'transitPower' which is already 1.0.
+        // But if we want explicit control:
+        
+        new FunctionalButton(
+                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.5
+        ).whenHeld(
+                new InstantCommand(() -> intake.setFullPower(true))
+        ).whenReleased(
+                new InstantCommand(() -> intake.setFullPower(false))
         );
 
         // Setup MultipleTelemetry to send data to both Driver Station and Dashboard

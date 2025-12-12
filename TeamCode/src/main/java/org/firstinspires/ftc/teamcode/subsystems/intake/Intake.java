@@ -15,6 +15,8 @@ public class Intake extends SubsystemBase {
 
     public static boolean isRunning = false;
     public static boolean isShooting = false;
+    public static boolean isFullPower = false;
+    public static boolean isReversed = false;
 
     public Intake(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotorEx.class, IntakeConstants.intakeMotorName);
@@ -38,6 +40,14 @@ public class Intake extends SubsystemBase {
         return isShooting;
     }
 
+    public void setFullPower(boolean fullPower) {
+        isFullPower = fullPower;
+    }
+
+    public void setReversed(boolean reversed) {
+        isReversed = reversed;
+    }
+
     public double getVelocity() {
         return intakeMotor.getVelocity();
     }
@@ -45,7 +55,17 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         if (isRunning) {
-            double targetPower = isShooting ? IntakeConstants.transitPower : IntakeConstants.intakePower;
+            double targetPower = IntakeConstants.intakePower;
+            
+            if (isShooting) {
+                targetPower = IntakeConstants.transitPower;
+            } else if (isFullPower) {
+                targetPower = IntakeConstants.fullPower;
+            }
+
+            if (isReversed) {
+                targetPower = -targetPower;
+            }
 
             /*
             // Jamming protection: Reduce power if speed drops too low while running

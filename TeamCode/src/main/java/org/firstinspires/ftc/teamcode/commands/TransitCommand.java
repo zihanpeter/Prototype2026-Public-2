@@ -67,7 +67,7 @@ public class TransitCommand extends CommandBase {
                 }
             } else {
                 // For MID and SLOW, use continuous lift (hold to shoot)
-                transit.setTransitState(Transit.TransitState.UP);
+            transit.setTransitState(Transit.TransitState.UP);
                 isPulseActive = false; // Reset pulse state just in case
             }
         } else {

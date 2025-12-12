@@ -34,7 +34,7 @@ public class Shooter extends SubsystemBase {
     public enum ShooterState {
         STOP(ShooterConstants.stopVelocity, ShooterConstants.shooterServoDownPos),
         SLOW(ShooterConstants.slowVelocity, ShooterConstants.shooterServoDownPos),
-        MID(ShooterConstants.midVelocity, ShooterConstants.shooterServoDownPos),
+        MID(ShooterConstants.midVelocity, ShooterConstants.shooterServoMidPos),
         FAST(ShooterConstants.fastVelocity, ShooterConstants.shooterServoUpPos);
 
         final double shooterVelocity, shooterServoPos;
