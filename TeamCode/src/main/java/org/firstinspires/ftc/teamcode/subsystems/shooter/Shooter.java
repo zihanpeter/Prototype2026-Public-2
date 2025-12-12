@@ -34,6 +34,7 @@ public class Shooter extends SubsystemBase {
     public enum ShooterState {
         STOP(ShooterConstants.stopVelocity, ShooterConstants.shooterServoDownPos),
         SLOW(ShooterConstants.slowVelocity, ShooterConstants.shooterServoDownPos),
+        MID(ShooterConstants.midVelocity, ShooterConstants.shooterServoDownPos),
         FAST(ShooterConstants.fastVelocity, ShooterConstants.shooterServoUpPos);
 
         final double shooterVelocity, shooterServoPos;
@@ -53,32 +54,59 @@ public class Shooter extends SubsystemBase {
         return rightShooter.getVelocity();
     }
 
+    public double getTargetVelocity() {
+        return shooterState.shooterVelocity;
+    }
+
     public boolean isShooterAtSetPoint() {
-        return Util.epsilonEqual(shooterState.shooterVelocity,
-                rightShooter.getVelocity(), ShooterConstants.shooterEpsilon);
+        // Since velocity is negative, we check if current velocity is less than or equal to target velocity (more negative = faster)
+        return rightShooter.getVelocity() <= shooterState.shooterVelocity;
     }
 
     @Override
     public void periodic() {
         if (shooterState != ShooterState.STOP) {
-            leftShooter.setPower(1);
-            rightShooter.setPower(-1);
-        }
-        else {
-            leftShooter.setPower(ShooterState.STOP.shooterVelocity);
-            rightShooter.setPower(-ShooterState.STOP.shooterVelocity);
+            double currentVel = rightShooter.getVelocity();
+            double targetVel = shooterState.shooterVelocity;
+            double power;
+
+            // Bang-Bang Control with Simple Feedforward Logic
+            // Since velocities are negative:
+            // currentVel > targetVel means we are SLOWER (e.g. -1000 > -1500) -> Need MORE power (more negative)
+            // currentVel <= targetVel means we are FASTER (e.g. -2000 <= -1500) -> Need LESS power (less negative)
+
+            if (currentVel > targetVel) {
+                // Too slow, apply max power
+                power = 1.0;
+            } else {
+                // Too fast, reduce power to maintain speed
+                // Estimate based on GoBilda 5203-2402-0001 (6000RPM)
+                // Max TPS = (6000 / 60) * 28 = 2800 TPS
+                // Ratio = target / 2800.0
+                power = Math.abs(targetVel) / ShooterConstants.maxVelocityTPS; // 2800 is the max TPS for 6000RPM motor
+            }
+
+            // Apply power
+            // leftShooter is positive, rightShooter is negative
+            leftShooter.setPower(power);
+            rightShooter.setPower(-power);
+
+        } else {
+            leftShooter.setPower(0);
+            rightShooter.setPower(0);
         }
 
         shooterServo.setPosition(shooterState.shooterServoPos);
 
         if (isShooterAtSetPoint()) {
             readyToShoot = true;
-        }
-        else if (rightShooter.getVelocity() <= releaseVelocity) {
+        } else if (rightShooter.getVelocity() > releaseVelocity) {
             readyToShoot = false;
         }
 
-        packet.put("rightShooterVelocity", rightShooter.getVelocity());
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        // packet.put("rightShooterVelocity", rightShooter.getVelocity());
+        // FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        // packet.put("rightShooterVelocity", rightShooter.getVelocity());
+        // FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }

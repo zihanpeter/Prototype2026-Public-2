@@ -27,4 +27,6 @@ public class DriveConstants {
 
     public static double kP_xy = 0.02;
     public static double kP_h = -0.8;
+
+    public static double deadband = 0.03;
 }

@@ -38,8 +38,6 @@ public class TeleOpSolo extends CommandOpMode {
 
     private Intake intake;
 
-    private Telemetry telemetryM;
-
     private boolean[] isAuto = {false};
 
     @Override
@@ -58,11 +56,29 @@ public class TeleOpSolo extends CommandOpMode {
                 new InstantCommand(() -> drive.reset(0))
         );
 
-        // Intake
+        // Intake (Always running, button toggles it off/on if needed, or maybe reverses?)
+        // Per request: "Continuous max power after init".
+        // Removing the 'whenHeld' command for Left Trigger since it's now always on.
+        // Or remapping Left Trigger to something else (e.g., REVERSE intake / Eject).
+        
+        // For now, removing the manual IntakeCommand binding on Left Trigger
+        // If you want Left Trigger to do something else (like Eject), tell me.
+        
+        /*
         new FunctionalButton(
                 () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.5
         ).whenHeld(
                 new IntakeCommand(transit, intake)
+        );
+        */
+
+        // Slow Shoot (Left Trigger)
+        new FunctionalButton(
+                () -> gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.5
+        ).whenHeld(
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW))
+        ).whenReleased(
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
         );
 
         // Fast Shoot
@@ -74,11 +90,11 @@ public class TeleOpSolo extends CommandOpMode {
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
         );
 
-        // Slow Shoot
+        // Mid Shoot
         new FunctionalButton(
                 () -> gamepadEx1.getButton(GamepadKeys.Button.LEFT_BUMPER)
         ).whenHeld(
-                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW))
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.MID))
         ).whenReleased(
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
         );
@@ -89,17 +105,27 @@ public class TeleOpSolo extends CommandOpMode {
         ).whenHeld(
                 new TransitCommand(transit, intake, shooter)
         );
+
+        // Setup MultipleTelemetry to send data to both Driver Station and Dashboard
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
     }
 
     @Override
     public void run() {
-        telemetryM = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
         CommandScheduler.getInstance().run();
         telemetry.addData("X", drive.getPose().getX(DistanceUnit.INCH));
         telemetry.addData("Y",  drive.getPose().getY(DistanceUnit.INCH));
         telemetry.addData("Heading", drive.getPose().getHeading(AngleUnit.RADIANS));
         telemetry.addData("YawOffset",drive.getYawOffset());
-        telemetry.addData("ShooterVelocity", shooter.shooterState.toString());
+        telemetry.addData("Shooter Current Velocity", shooter.getVelocity());
+        telemetry.addData("Shooter Target Velocity", shooter.getTargetVelocity());
+        telemetry.addData("Intake Velocity", intake.getVelocity());
+        // telemetry.addData("Intake Velocity", Math.round(intake.getVelocity() / 100.0) * 100.0);
+
+        if (shooter.isShooterAtSetPoint() && shooter.getTargetVelocity() != 0) {
+            telemetry.addData("Shooter Status", "TARGET SPEED REACHED");
+        }
+        
         telemetry.addData("Gamepad Lx: ", gamepadEx1.getLeftX());
         telemetry.addData("Gamepad Ly: ", gamepadEx1.getLeftY());
         telemetry.addData("Gamepad Rx: ", gamepadEx1.getRightX());
@@ -110,8 +136,12 @@ public class TeleOpSolo extends CommandOpMode {
         telemetry.addData("LF Mode: ", drive.leftFrontMotor.getMode());
         telemetry.addData("Is Gamepad On: ", drive.isGamepadOn);
         telemetry.update();
+
+        // Send a single consolidated packet to Dashboard
         TelemetryPacket packet = new TelemetryPacket();
         packet.put("ShooterVelocity", shooter.getVelocity());
+        packet.put("IntakeVelocity", intake.getVelocity());
+        packet.put("IntakeTargetPower", Intake.isShooting ? org.firstinspires.ftc.teamcode.subsystems.intake.IntakeConstants.transitPower : org.firstinspires.ftc.teamcode.subsystems.intake.IntakeConstants.intakePower);
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }

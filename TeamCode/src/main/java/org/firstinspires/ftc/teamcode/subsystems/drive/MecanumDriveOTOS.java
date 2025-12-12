@@ -71,7 +71,7 @@ public class MecanumDriveOTOS extends SubsystemBase {
         double rotX = fun * Math.cos(-botHeading) - forward * Math.sin(-botHeading);
         double rotY = fun * Math.sin(-botHeading) + forward * Math.cos(-botHeading);
 
-        rotX = rotX * strafingBalance; // Counteract imperfect strafing
+        rotX = -rotX * strafingBalance; // Counteract imperfect strafing
 
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio,
@@ -89,7 +89,7 @@ public class MecanumDriveOTOS extends SubsystemBase {
     }
 
     public void moveRobot(double forward, double fun, double turn) {
-        double rotX = fun * strafingBalance; // Counteract imperfect strafing
+        double rotX = -fun * strafingBalance; // Counteract imperfect strafing
         double rotY = forward;
 
         // Denominator is the largest motor power (absolute value) or 1
@@ -107,27 +107,6 @@ public class MecanumDriveOTOS extends SubsystemBase {
         rightBackMotor.setPower(rightBackPower);
     }
 
-    public void turnRobot(double angle, double power) {
-        double preAngle = otos.getPosition().h;
-        while (otos.getPosition().h - preAngle < angle) {
-            leftFrontMotor.setPower(power * 0.2);
-            leftBackMotor.setPower(power * 0.2);
-            rightFrontMotor.setPower(power * -0.2);
-            rightBackMotor.setPower(power * -0.2);
-        }
-    }
-
-    public void turnRobotTo(double angle, double power) {
-        double heading = otos.getPosition().h;
-        double needs = (angle - heading) % (2 * Math.PI);
-        while (Util.epsilonEqual(angle,otos.getPosition().h,0.02)) {
-            leftFrontMotor.setPower(power * 0.2);
-            leftBackMotor.setPower(power * 0.2);
-            rightFrontMotor.setPower(power * -0.2);
-            rightBackMotor.setPower(power * -0.2);
-        }
-    }
-
     public Pose2D getPose() {
         SparkFunOTOS.Pose2D pose = otos.getPosition();
         return new Pose2D(DriveConstants.distanceUnit, pose.x, pose.y, DriveConstants.angleUnit, pose.h);
@@ -141,28 +120,14 @@ public class MecanumDriveOTOS extends SubsystemBase {
     }
 
     private void applyBreak() {
-        Pose2D p = getPose();
-
-        double errorX = lastPose.getX(DriveConstants.distanceUnit) - p.getX(DriveConstants.distanceUnit);
-        double errorY = lastPose.getY(DriveConstants.distanceUnit) - p.getY(DriveConstants.distanceUnit);
-        double errorH = angleWrap(lastPose.getHeading(DriveConstants.angleUnit) - p.getHeading(DriveConstants.angleUnit));
-
-        double forward =  errorY * kP_xy;
-        double strafe  =  errorX * kP_xy;
-        double turn    =  errorH * kP_h;
-        
-        forward = clip(forward, -1, 1);
-        strafe  = clip(strafe,  -1, 1);
-        turn    = clip(turn,    -1, 1);
-
-        moveRobotFieldRelative(forward, strafe, turn);
+        moveRobot(0, 0, 0);
     }
 
     @Override
     public void periodic() {
-//        if (!isGamepadOn) {
-//            applyBreak();
-//        }
+        if (!isGamepadOn) {
+            applyBreak();
+        }
 
         lastPose = getPose();
     }

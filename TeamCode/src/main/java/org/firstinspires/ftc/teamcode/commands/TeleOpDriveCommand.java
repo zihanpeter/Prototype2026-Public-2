@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode.commands;
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 
+import org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDriveOTOS;
 
 public class TeleOpDriveCommand extends CommandBase {
@@ -20,14 +21,13 @@ public class TeleOpDriveCommand extends CommandBase {
     @Override
     public void execute() {
         if (!isAuto[0]) {
-            drive.moveRobotFieldRelative(gamepadEx.getLeftY(), gamepadEx.getLeftX(), gamepadEx.getRightX());
-//            if (Math.abs(gamepadEx.getLeftX()) > 0.03 || Math.abs(gamepadEx.getLeftY()) > 0.03 || Math.abs(gamepadEx.getRightX()) > 0.03) {
-//                drive.setGamepad(true);
-//                drive.moveRobotFieldRelative(gamepadEx.getLeftY(), gamepadEx.getLeftX(), gamepadEx.getRightX());
-//            }
-//            else {
-//                drive.setGamepad(false);
-//            }
+            if (Math.abs(gamepadEx.getLeftX()) > DriveConstants.deadband || Math.abs(gamepadEx.getLeftY()) > DriveConstants.deadband || Math.abs(gamepadEx.getRightX()) > DriveConstants.deadband) {
+                drive.setGamepad(true);
+                drive.moveRobotFieldRelative(gamepadEx.getLeftY(), gamepadEx.getLeftX(), gamepadEx.getRightX());
+            }
+            else {
+                drive.setGamepad(false);
+            }
         }
     }
 }
