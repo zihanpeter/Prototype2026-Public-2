@@ -9,5 +9,5 @@ public class TransitConstants {
     public static double transitUpPos = 0.94;
     public static double transitDownPos = 0.74;
 
-    public static double pulseDuration = 0.5;
+    public static double pulseDuration = 0.2;
 }

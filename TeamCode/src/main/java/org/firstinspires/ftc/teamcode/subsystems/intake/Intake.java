@@ -64,7 +64,8 @@ public class Intake extends SubsystemBase {
             }
 
             if (isReversed) {
-                targetPower = -targetPower;
+                // When reversed, use full power (negative)
+                targetPower = -IntakeConstants.fullPower;
             }
 
             /*
