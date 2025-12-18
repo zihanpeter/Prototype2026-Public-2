@@ -71,8 +71,8 @@ public class BlueNear extends AutoCommandBase {
                     // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP); 
                 }),
-                new AutoDriveCommand(follower, path2_pickupSample1_part1).withTimeout(3000),
-                new AutoDriveCommand(follower, path2_pickupSample1_part2).withTimeout(3000),
+                new AutoDriveCommand(follower, path2_pickupSample1_part1).withTimeout(5000),
+                new AutoDriveCommand(follower, path2_pickupSample1_part2).withTimeout(5000),
                 
                 // =========================================================
                 // 2. Path 3: Score Sample 1
@@ -81,7 +81,7 @@ public class BlueNear extends AutoCommandBase {
                     // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path3_scoreSample1).withTimeout(3000),
+                new AutoDriveCommand(follower, path3_scoreSample1).withTimeout(5000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 1
 
                 // =========================================================
@@ -91,8 +91,8 @@ public class BlueNear extends AutoCommandBase {
                     // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path4_pickupSample2_part1).withTimeout(3000),
-                new AutoDriveCommand(follower, path5_pickupSample2_part2).withTimeout(3000),
+                new AutoDriveCommand(follower, path4_pickupSample2_part1).withTimeout(5000),
+                new AutoDriveCommand(follower, path5_pickupSample2_part2).withTimeout(5000),
 
                 // =========================================================
                 // 4. Path 6: Score Sample 2
@@ -101,7 +101,7 @@ public class BlueNear extends AutoCommandBase {
                     // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path6_scoreSample2).withTimeout(3000),
+                new AutoDriveCommand(follower, path6_scoreSample2).withTimeout(5000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 2
 
                 // =========================================================
@@ -111,8 +111,8 @@ public class BlueNear extends AutoCommandBase {
                     // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path7_pickupSample3_part1).withTimeout(3000),
-                new AutoDriveCommand(follower, path8_pickupSample3_part2).withTimeout(3000),
+                new AutoDriveCommand(follower, path7_pickupSample3_part1).withTimeout(5000),
+                new AutoDriveCommand(follower, path8_pickupSample3_part2).withTimeout(5000),
 
                 // =========================================================
                 // 6. Path 9: Score Sample 3
@@ -121,7 +121,7 @@ public class BlueNear extends AutoCommandBase {
                     // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path9_scoreSample3).withTimeout(3000),
+                new AutoDriveCommand(follower, path9_scoreSample3).withTimeout(5000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 3
                 
                 // =========================================================

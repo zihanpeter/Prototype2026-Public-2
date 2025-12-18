@@ -11,6 +11,8 @@ import com.pedropathing.paths.PathChain;
 public class AutoDriveCommand extends CommandBase {
     private Follower follower;
     private PathChain pathChain;
+    private long finishTime = 0;
+    private static final long WAIT_MS = 250; // Buffer time to stabilize after path ends
 
     /**
      * Constructor for AutoDriveCommand.
@@ -29,6 +31,7 @@ public class AutoDriveCommand extends CommandBase {
     @Override
     public void initialize() {
         follower.followPath(pathChain);
+        finishTime = 0;
     }
 
     /**
@@ -36,7 +39,8 @@ public class AutoDriveCommand extends CommandBase {
      */
     @Override
     public void execute() {
-        follower.update();
+        // follower.update() is handled in AutoCommandBase main loop
+        // to ensure continuous holding. We do nothing here but wait.
     }
 
     /**
@@ -50,9 +54,20 @@ public class AutoDriveCommand extends CommandBase {
     }
 
     /**
-     * Command finishes when the follower is no longer busy (path completed).
+     * Command finishes when the follower is no longer busy AND a buffer time has passed.
      */
+    @Override
     public boolean isFinished() {
-        return !follower.isBusy();
+        if (follower.isBusy()) {
+            finishTime = 0; // Reset timer if still busy
+            return false;
+        } else {
+            // Path finished (or thinks it did)
+            if (finishTime == 0) {
+                finishTime = System.currentTimeMillis(); // Start timer
+            }
+            // Only finish if stable for WAIT_MS
+            return System.currentTimeMillis() - finishTime > WAIT_MS;
+        }
     }
 }
