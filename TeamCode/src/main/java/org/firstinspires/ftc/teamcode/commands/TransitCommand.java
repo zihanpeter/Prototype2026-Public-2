@@ -51,19 +51,27 @@ public class TransitCommand extends CommandBase {
     public void execute() {
         double currentVel = shooter.getVelocity();
         double targetVel = shooter.getTargetVelocity();
-        double tolerance = ShooterConstants.toleranceMid; // Default tolerance
+        double toleranceUpper = 300; // Default
+        double toleranceLower = 300; // Default
 
         // Select tolerance based on current shooter state
         if (shooter.shooterState == Shooter.ShooterState.FAST) {
-            tolerance = ShooterConstants.toleranceFast;
+            toleranceUpper = ShooterConstants.toleranceFastUpper;
+            toleranceLower = ShooterConstants.toleranceFastLower;
         } else if (shooter.shooterState == Shooter.ShooterState.MID) {
-            tolerance = ShooterConstants.toleranceMid;
+            toleranceUpper = ShooterConstants.toleranceMidUpper;
+            toleranceLower = ShooterConstants.toleranceMidLower;
         } else if (shooter.shooterState == Shooter.ShooterState.SLOW) {
-            tolerance = ShooterConstants.toleranceSlow;
+            toleranceUpper = ShooterConstants.toleranceSlowUpper;
+            toleranceLower = ShooterConstants.toleranceSlowLower;
         }
 
         // Check if velocity is within tolerance range
-        boolean inRange = Math.abs(currentVel - targetVel) <= tolerance;
+        // Since velocities are negative:
+        // Upper Bound (Slower/Less Negative): targetVel + toleranceUpper
+        // Lower Bound (Faster/More Negative): targetVel - toleranceLower
+        // Condition: (targetVel - toleranceLower) <= currentVel <= (targetVel + toleranceUpper)
+        boolean inRange = (currentVel >= (targetVel - toleranceLower)) && (currentVel <= (targetVel + toleranceUpper));
 
         if (inRange && shooter.shooterState != Shooter.ShooterState.STOP) {
             // Apply pulse logic ONLY for FAST state

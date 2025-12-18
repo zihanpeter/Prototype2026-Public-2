@@ -31,29 +31,29 @@ public class DriverControls {
                 new InstantCommand(() -> robot.drive.reset(0))
         );
 
-        // Slow Shoot (Right Trigger > Threshold)
+        // Slow Shoot (Left Bumper - Close Shot)
         new FunctionalButton(
-                () -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= TeleOpConstants.slowShootTriggerThreshold
+                () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER)
         ).whenHeld(
                 new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.SLOW))
         ).whenReleased(
                 new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.STOP))
         );
 
-        // Fast Shoot (Right Bumper)
+        // Mid Shoot (Right Bumper - Mid Shot)
         new FunctionalButton(
                 () -> gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER)
         ).whenHeld(
-                new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.FAST))
+                new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.MID))
         ).whenReleased(
                 new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.STOP))
         );
 
-        // Mid Shoot (Left Bumper)
+        // Fast Shoot (Right Trigger - Far Shot)
         new FunctionalButton(
-                () -> gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER)
+                () -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= TeleOpConstants.slowShootTriggerThreshold
         ).whenHeld(
-                new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.MID))
+                new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.FAST))
         ).whenReleased(
                 new InstantCommand(() -> robot.shooter.setShooterState(Shooter.ShooterState.STOP))
         );

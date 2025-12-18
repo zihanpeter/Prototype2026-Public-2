@@ -11,7 +11,7 @@ public class IntakeConstants {
     public static String intakeMotorName = "intakeMotor";
 
     // Power levels
-    public static double intakePower = 0.35; // Standard running power
+    public static double intakePower = 0.5; // Standard running power
     public static double fullPower = 1.0;    // Max power (e.g., for reversing or fast intake)
     public static double transitPower = 1;   // Power when transferring/shooting
 

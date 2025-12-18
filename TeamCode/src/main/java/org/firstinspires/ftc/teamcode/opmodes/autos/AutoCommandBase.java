@@ -69,9 +69,6 @@ public abstract class AutoCommandBase extends LinearOpMode {
             // Run the CommandScheduler to execute scheduled commands
             CommandScheduler.getInstance().run();
             
-            // Update Follower for path following logic
-            follower.update();
-            
             // Update telemetry
             telemetry.update();
         }

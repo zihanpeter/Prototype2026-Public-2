@@ -29,17 +29,28 @@ public class ShooterConstants {
      * Target Velocities (in Ticks Per Second)
      * Negative values indicate direction.
      */
-    public static double stopVelocity = -600;  // Idle speed (Same as slow/close range)
-    public static double fastVelocity = -2100; // Updated for 6000RPM motor (~75% power)
-    public static double midVelocity = -1300;  // Updated for mid-range shots (~46% power)
+    public static double stopVelocity = -900;  // Idle speed (Same as slow/close range)
+    public static double fastVelocity = -1250; // Updated for 6000RPM motor (~75% power)
+    public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
     public static double slowVelocity = -600;  // Low speed for close/safe shots (~21% power)
     public static double releaseVelocity = -200; // Threshold to consider "stopped" or "too slow"
     
-    // Velocity tolerances for transit engagement (+/- ticks per second)
-    // Defines how close the velocity needs to be to the target before firing logic engages
-    public static double toleranceMid = 300;
-    public static double toleranceFast = 20;
-    public static double toleranceSlow = 400; // Relaxed tolerance for slow speed
+    // Velocity tolerances for transit engagement (ticks per second)
+    // Defines the acceptable range around the target velocity.
+    // Upper: Max allowed speed ABOVE target (less negative magnitude)
+    // Lower: Max allowed speed BELOW target (more negative magnitude)
+    
+    // MID Tolerances
+    public static double toleranceMidUpper = 50; // Allow being slightly slower
+    public static double toleranceMidLower = 50; // Allow being slightly faster
+    
+    // FAST Tolerances
+    public static double toleranceFastUpper = 50;
+    public static double toleranceFastLower = 50; // Usually okay to be faster
+    
+    // SLOW Tolerances
+    public static double toleranceSlowUpper = 400;
+    public static double toleranceSlowLower = 300;
 
     // Servo Positions for Angle Adjustment
     // Updated based on user request: Close (0.85) -> Far (0.29)
