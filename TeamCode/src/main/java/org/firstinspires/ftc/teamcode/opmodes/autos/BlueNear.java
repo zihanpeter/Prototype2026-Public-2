@@ -131,7 +131,7 @@ public class BlueNear extends AutoCommandBase {
                     intake.stopIntake(); // Stop at the end
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path10_park).withTimeout(3000),
+                // new AutoDriveCommand(follower, path10_park).withTimeout(3000), // Park removed
                 new InstantCommand(() -> telemetry.addData("Status", "Auto Completed"))
         );
     }
