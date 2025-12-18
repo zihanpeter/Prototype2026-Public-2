@@ -7,19 +7,24 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
-import com.pedropathing.ftc.localization.constants.OTOSConstants;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.pedropathing.ftc.localization.constants.PinpointConstants;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+/**
+ * Pedro Pathing Configuration.
+ * Defines FollowerConstants, DriveConstants, and LocalizerConstants (Pinpoint).
+ */
 @Config
 public class Constants {
 
+    // Follower Constants: Define mass, limits, and PIDF coefficients for path following
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(10.85)
+            .mass(10.85) // Robot mass in kg
             .forwardZeroPowerAcceleration(DriveConstants.forwardAcceleration)
             .lateralZeroPowerAcceleration(DriveConstants.strafeAcceleration)
             .useSecondaryTranslationalPIDF(false)
@@ -31,6 +36,7 @@ public class Constants {
             .centripetalScaling(0.0003);
 
 
+    // Mecanum Drivetrain Constants: Motor names, directions, and velocity limits
     public static MecanumConstants driveConstants = new MecanumConstants()
             .leftFrontMotorName(DriveConstants.leftFrontMotorName)
             .leftRearMotorName(DriveConstants.leftBackMotorName)
@@ -43,31 +49,30 @@ public class Constants {
             .xVelocity(DriveConstants.forwardVelocity)
             .yVelocity(DriveConstants.strafeVelocity);
 
-    public static OTOSConstants otosConstants = new OTOSConstants()
-            .hardwareMapName("otos")
-            .linearUnit(DistanceUnit.INCH)
-            .angleUnit(AngleUnit.RADIANS)
-            .offset(new SparkFunOTOS.Pose2D(DriveConstants.xPoseOTOS,
-                    DriveConstants.yPoseOTOS, DriveConstants.headingPoseOTOS))
-            .linearScalar(DriveConstants.linearScalar)
-            .angularScalar(DriveConstants.angularScalar);
+    // OTOS Constants (Commented out as we are using Pinpoint)
+//    public static OTOSConstants otosConstants = new OTOSConstants()
+//            .hardwareMapName("otos")
+//            .linearUnit(DistanceUnit.INCH)
+//            .angleUnit(AngleUnit.RADIANS)
+//            .offset(new SparkFunOTOS.Pose2D(DriveConstants.xPoseOTOS,
+//                    DriveConstants.yPoseOTOS, DriveConstants.headingPoseOTOS))
+//            .linearScalar(DriveConstants.linearScalar)
+//            .angularScalar(DriveConstants.angularScalar);
 
-//    public static PinpointConstants localizerConstants = new PinpointConstants()
-//            .forwardPodY(0)
-//            .strafePodX(6.5)
-//            .distanceUnit(DistanceUnit.INCH)
-//            .hardwareMapName("od")
-//            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
-//            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED)
-//            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+    // Pinpoint Localizer Constants
+    public static PinpointConstants localizerConstants = new PinpointConstants()
+            .forwardPodY(DriveConstants.yPoseDW)
+            .strafePodX(DriveConstants.xPoseDW)
+            .distanceUnit(DistanceUnit.INCH)
+            .hardwareMapName("od")
+            .encoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD)
+            .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
+    
     /**
-     These are the PathConstraints in order:
-     tValueConstraint, velocityConstraint, translationalConstraint, headingConstraint, timeoutConstraint,
-     brakingStrength, BEZIER_CURVE_SEARCH_LIMIT, brakingStart
-
-     The BEZIER_CURVE_SEARCH_LIMIT should typically be left at 10 and shouldn't be changed.
+     * Constraints for Path Generation (commented out/unused in current builder, but good for reference)
+     * Order: tValue, velocity, translational, heading, timeout, brakingStrength, searchLimit, brakingStart
      */
-
 //    public static PathConstraints pathConstraints = new PathConstraints(
 //            0.995,
 //            0.1,
@@ -79,12 +84,18 @@ public class Constants {
 //            1
 //    );
 
-    //Add custom localizers or drivetrains here
+    /**
+     * Factory method to create a Follower instance.
+     * Builds the follower with Mecanum Drive and Pinpoint Localizer.
+     *
+     * @param hardwareMap The hardware map.
+     * @return Configured Follower instance.
+     */
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
                 .mecanumDrivetrain(driveConstants)
-                .OTOSLocalizer(otosConstants)
-//                .pinpointLocalizer(localizerConstants)
+                // .OTOSLocalizer(otosConstants)
+                .pinpointLocalizer(localizerConstants)
 //                .pathConstraints(pathConstraints)
                 .build();
     }

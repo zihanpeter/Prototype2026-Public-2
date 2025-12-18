@@ -8,39 +8,52 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
 import org.firstinspires.ftc.teamcode.subsystems.transit.TransitConstants;
 
+/**
+ * Command to handle the Transit (feeding) logic.
+ * Controls the servo to feed rings into the shooter when conditions are met.
+ */
 public class TransitCommand extends CommandBase {
     private final Transit transit;
-
     private final Shooter shooter;
     
+    // Timer for pulse logic (lifting servo for a set duration)
     private final com.qualcomm.robotcore.util.ElapsedTime pulseTimer = new com.qualcomm.robotcore.util.ElapsedTime();
     private boolean isPulseActive = false;
 
+    /**
+     * Constructor for TransitCommand.
+     *
+     * @param transit The transit subsystem.
+     * @param intake The intake subsystem (currently unused in logic but kept for consistency).
+     * @param shooter The shooter subsystem (used for velocity checks).
+     */
     public TransitCommand(Transit transit, Intake intake, Shooter shooter) {
         this.transit = transit;
-
         this.shooter = shooter;
     }
 
+    /**
+     * Initialize command: Reset pulse state and ensure servo is down.
+     */
     @Override
     public void initialize() {
         isPulseActive = false;
         transit.setTransitState(Transit.TransitState.DOWN);
     }
 
+    /**
+     * Execute logic:
+     * Checks if shooter is at target velocity (within tolerance).
+     * If FAST mode: Pulses the servo (Up for duration, then Down).
+     * If MID/SLOW mode: Holds the servo UP as long as conditions are met.
+     */
     @Override
     public void execute() {
-        // If the shooter is up to speed and spinning, lift the transit servo to feed the ring
-        // Added tolerance: Only lift if velocity is within a range of the target
-        // Target is negative (e.g. -1500). Current is negative (e.g. -1600).
-        // Check if current is MORE negative than target (faster) AND not TOO much faster (safety?)
-        // Or just stick to "Fast enough" logic.
-        // User request: "Only operate servo within a certain +/- range of target speed"
-        
         double currentVel = shooter.getVelocity();
         double targetVel = shooter.getTargetVelocity();
-        double tolerance = ShooterConstants.toleranceMid; // Default
+        double tolerance = ShooterConstants.toleranceMid; // Default tolerance
 
+        // Select tolerance based on current shooter state
         if (shooter.shooterState == Shooter.ShooterState.FAST) {
             tolerance = ShooterConstants.toleranceFast;
         } else if (shooter.shooterState == Shooter.ShooterState.MID) {
@@ -49,16 +62,19 @@ public class TransitCommand extends CommandBase {
             tolerance = ShooterConstants.toleranceSlow;
         }
 
+        // Check if velocity is within tolerance range
         boolean inRange = Math.abs(currentVel - targetVel) <= tolerance;
 
         if (inRange && shooter.shooterState != Shooter.ShooterState.STOP) {
             // Apply pulse logic ONLY for FAST state
             if (shooter.shooterState == Shooter.ShooterState.FAST) {
                 if (!isPulseActive) {
+                    // Start Pulse
                     isPulseActive = true;
                     pulseTimer.reset();
                     transit.setTransitState(Transit.TransitState.UP);
                 } else {
+                    // Check Pulse Duration
                     if (pulseTimer.seconds() > TransitConstants.pulseDuration) {
                         transit.setTransitState(Transit.TransitState.DOWN);
                     } else {
@@ -67,7 +83,7 @@ public class TransitCommand extends CommandBase {
                 }
             } else {
                 // For MID and SLOW, use continuous lift (hold to shoot)
-            transit.setTransitState(Transit.TransitState.UP);
+                transit.setTransitState(Transit.TransitState.UP);
                 isPulseActive = false; // Reset pulse state just in case
             }
         } else {
@@ -75,13 +91,13 @@ public class TransitCommand extends CommandBase {
             isPulseActive = false;
             transit.setTransitState(Transit.TransitState.DOWN);
         }
-
-
     }
 
+    /**
+     * End command: Ensure servo is retracted (DOWN).
+     */
     @Override
     public void end(boolean interrupted) {
         transit.setTransitState(Transit.TransitState.DOWN);
-
     }
 }

@@ -9,6 +9,10 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
+/**
+ * Subsystem handling the Intake mechanism.
+ * Controls the intake motor for collecting game elements.
+ */
 public class Intake extends SubsystemBase {
     public final DcMotorEx intakeMotor;
     public final TelemetryPacket packet = new TelemetryPacket();
@@ -18,58 +22,102 @@ public class Intake extends SubsystemBase {
     public static boolean isFullPower = false;
     public static boolean isReversed = false;
 
+    /**
+     * Constructor for Intake.
+     * Initializes the intake motor and sets default state.
+     *
+     * @param hardwareMap The hardware map.
+     */
     public Intake(HardwareMap hardwareMap) {
         intakeMotor = hardwareMap.get(DcMotorEx.class, IntakeConstants.intakeMotorName);
         intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        isRunning = true; // Start running by default
+        isRunning = true; // Intake runs continuously by default after initialization
     }
 
+    /**
+     * Toggles the intake running state (On/Off).
+     */
     public void toggle() {
         isRunning = !isRunning;
     }
 
+    /**
+     * Checks if the intake is currently running.
+     * @return True if running.
+     */
     public boolean isRunning() {
         return isRunning;
     }
 
+    /**
+     * Toggles the shooting state flag.
+     * When shooting, intake might need to run at a specific power (transitPower).
+     */
     public void toggleShooting() {
         isShooting = !isShooting;
     }
 
+    /**
+     * Checks if the intake is in shooting mode.
+     * @return True if shooting.
+     */
     public boolean isShooting() {
         return isShooting;
     }
 
+    /**
+     * Sets the full power flag.
+     * Used to override standard intake power with maximum power.
+     *
+     * @param fullPower True to enable full power.
+     */
     public void setFullPower(boolean fullPower) {
         isFullPower = fullPower;
     }
 
+    /**
+     * Sets the reversed flag.
+     * Used to reverse the intake direction (e.g., for ejecting).
+     *
+     * @param reversed True to reverse intake.
+     */
     public void setReversed(boolean reversed) {
         isReversed = reversed;
     }
 
+    /**
+     * Gets the current velocity of the intake motor.
+     * @return Velocity in ticks per second.
+     */
     public double getVelocity() {
         return intakeMotor.getVelocity();
     }
 
+    /**
+     * Periodic update method.
+     * Controls the motor power based on the current state flags.
+     */
     @Override
     public void periodic() {
         if (isRunning) {
             double targetPower = IntakeConstants.intakePower;
             
+            // Priority logic for power selection
             if (isShooting) {
                 targetPower = IntakeConstants.transitPower;
             } else if (isFullPower) {
                 targetPower = IntakeConstants.fullPower;
             }
 
+            // Reverse logic
             if (isReversed) {
                 // When reversed, use full power (negative)
                 targetPower = -IntakeConstants.fullPower;
             }
 
             /*
-            // Jamming protection: Reduce power if speed drops too low while running
+            // Jamming protection (Currently Disabled): 
+            // Logic to reduce power if speed drops too low while running, indicating a jam.
             // 20% of max theoretical speed
             double threshold = IntakeConstants.maxVelocityTPS * IntakeConstants.jammingThresholdRatio;
             double currentVel = Math.abs(intakeMotor.getVelocity());
@@ -86,6 +134,7 @@ public class Intake extends SubsystemBase {
             intakeMotor.setPower(0);
         }
 
+        // Telemetry packet is now handled centrally in the OpMode
         // packet.put("IntakeVelocity", getVelocity());
         // FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
