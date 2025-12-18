@@ -67,7 +67,7 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         
         // Set encoder directions based on installation
         pinpoint.setEncoderDirections(
-            GoBildaPinpointDriver.EncoderDirection.REVERSED, 
+            GoBildaPinpointDriver.EncoderDirection.FORWARD, 
             GoBildaPinpointDriver.EncoderDirection.REVERSED
         );
         

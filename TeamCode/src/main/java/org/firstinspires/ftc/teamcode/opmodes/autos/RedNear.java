@@ -60,6 +60,12 @@ public class RedNear extends AutoCommandBase {
                     // Start shooter for preload (MID)
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
+                // =========================================================
+                // 0. Preload & Start Intake
+                // =========================================================
+                new InstantCommand(() -> {
+                    intake.startIntake(); // Start continuous intake
+                }),
                 new AutoDriveCommand(follower, path1_scorePreload).withTimeout(3000),
                 
                 // Shoot Preload Logic
@@ -69,8 +75,7 @@ public class RedNear extends AutoCommandBase {
                 // 1. Path 2: Pickup Sample 1
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.setFullPower(true); // Run at full power (1.0)
-                    intake.startIntake(); 
+                    // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP); 
                 }),
                 new AutoDriveCommand(follower, path2_pickupSample1).withTimeout(3000),
@@ -79,8 +84,7 @@ public class RedNear extends AutoCommandBase {
                 // 2. Path 3: Score Sample 1
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.stopIntake();
-                    intake.setFullPower(false); // Reset to normal power
+                    // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
                 new AutoDriveCommand(follower, path3_scoreSample1).withTimeout(3000),
@@ -90,7 +94,7 @@ public class RedNear extends AutoCommandBase {
                 // 3. Path 4 & 5: Pickup Sample 2
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.startIntake();
+                    // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
                 new AutoDriveCommand(follower, path4_pickupSample2_part1).withTimeout(3000),
@@ -100,7 +104,7 @@ public class RedNear extends AutoCommandBase {
                 // 4. Path 6: Score Sample 2
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.stopIntake();
+                    // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
                 new AutoDriveCommand(follower, path6_scoreSample2).withTimeout(3000),
@@ -110,7 +114,7 @@ public class RedNear extends AutoCommandBase {
                 // 5. Path 7 & 8: Pickup Sample 3
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.startIntake();
+                    // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
                 new AutoDriveCommand(follower, path7_pickupSample3_part1).withTimeout(3000),
@@ -120,7 +124,7 @@ public class RedNear extends AutoCommandBase {
                 // 6. Path 9: Score Sample 3
                 // =========================================================
                 new InstantCommand(() -> {
-                    intake.stopIntake();
+                    // Keep Intake running
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
                 new AutoDriveCommand(follower, path9_scoreSample3).withTimeout(3000),
@@ -130,6 +134,7 @@ public class RedNear extends AutoCommandBase {
                 // 7. Park (Optional)
                 // =========================================================
                 new InstantCommand(() -> {
+                    intake.stopIntake();
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
                 new AutoDriveCommand(follower, path10_park).withTimeout(3000),
