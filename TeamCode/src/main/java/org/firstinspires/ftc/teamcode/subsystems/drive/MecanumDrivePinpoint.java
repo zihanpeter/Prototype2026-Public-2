@@ -67,7 +67,7 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         
         // Set encoder directions based on installation
         pinpoint.setEncoderDirections(
-            GoBildaPinpointDriver.EncoderDirection.FORWARD, 
+            GoBildaPinpointDriver.EncoderDirection.REVERSED, 
             GoBildaPinpointDriver.EncoderDirection.REVERSED
         );
         
@@ -131,6 +131,14 @@ public class MecanumDrivePinpoint extends SubsystemBase {
      * @param turn Rotation speed.
      */
     public void moveRobotFieldRelative(double forward, double fun, double turn) {
+        // Deadband check to stop drift
+        if (Math.abs(forward) < DriveConstants.deadband &&
+            Math.abs(fun) < DriveConstants.deadband &&
+            Math.abs(turn) < DriveConstants.deadband) {
+            stop();
+            return;
+        }
+
         pinpoint.update(); // Ensure data is fresh
         
         // Get current robot heading from Pinpoint, adjusting for offset
@@ -168,6 +176,18 @@ public class MecanumDrivePinpoint extends SubsystemBase {
      * @param turn Rotation speed (positive is turn right).
      */
     public void moveRobot(double forward, double fun, double turn) {
+        // Deadband check to stop drift
+        if (Math.abs(forward) < DriveConstants.deadband &&
+            Math.abs(fun) < DriveConstants.deadband &&
+            Math.abs(turn) < DriveConstants.deadband) {
+            // Manually set motors to 0 to ensure braking
+            leftFrontMotor.setPower(0);
+            leftBackMotor.setPower(0);
+            rightFrontMotor.setPower(0);
+            rightBackMotor.setPower(0);
+            return;
+        }
+
         // Apply strafing balance and sign correction
         // Note: 'fun' input usually assumes positive is right, but standard mecanum math might expect different sign convention
         // Here we invert 'fun' and apply balance

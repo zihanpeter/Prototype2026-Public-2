@@ -66,6 +66,9 @@ public abstract class AutoCommandBase extends LinearOpMode {
 
         // Main Loop
         while (opModeIsActive() && !isStopRequested()) {
+            // Update Follower (Run this every loop to maintain position/hold)
+            follower.update();
+
             // Run the CommandScheduler to execute scheduled commands
             CommandScheduler.getInstance().run();
             
