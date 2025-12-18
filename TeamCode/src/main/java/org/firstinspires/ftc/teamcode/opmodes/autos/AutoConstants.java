@@ -19,9 +19,9 @@ public class AutoConstants {
     // =========================================================
     
     // NEAR Side (Basket Side)
-    // Start Point: x: 20.043, y: 122.086, startDeg: 144
-    public static final Pose BLUE_START_POSE = new Pose(20.043, 122.086, toRadians(144));
-    public static final Pose RED_START_POSE = new Pose(123.957, 122.086, toRadians(36));
+    // Start Point: x: 24.854, y: 128.901, startDeg: 144
+    public static final Pose BLUE_START_POSE = new Pose(24.854, 128.901, toRadians(144));
+    public static final Pose RED_START_POSE = new Pose(119.146, 128.901, toRadians(36));
 
     // FAR Side (Observation Zone Side)
     // Start Point: x: 47.892, y: 8.063, startDeg: 90
@@ -49,9 +49,9 @@ public class AutoConstants {
     // Sample Pickup Poses
     // =========================================================
     
-    // Sample 1 (Rightmost/First one): x: 23.65, y: 84.14, endDeg: 180
-    public static final Pose BLUE_SAMPLE_1_POSE = new Pose(23.65, 84.14, toRadians(180));
-    public static final Pose RED_SAMPLE_1_POSE = new Pose(120.35, 84.14, toRadians(0));
+    // Sample 1 (Rightmost/First one): x: 23.785, y: 83.87, endDeg: 180
+    public static final Pose BLUE_SAMPLE_1_POSE = new Pose(23.785, 83.87, toRadians(180));
+    public static final Pose RED_SAMPLE_1_POSE = new Pose(120.215, 83.87, toRadians(0));
 
     // Sample 2 (Middle one)
     // Path 4 leads to an intermediate point, Path 5 leads to the pickup

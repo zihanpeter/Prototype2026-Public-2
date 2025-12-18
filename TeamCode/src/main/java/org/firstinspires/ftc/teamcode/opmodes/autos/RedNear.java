@@ -33,7 +33,6 @@ public class RedNear extends AutoCommandBase {
 
     private PathChain path1_scorePreload;
     private PathChain path2_pickupSample1;
-    private PathChain path2_5_gate;
     private PathChain path3_scoreSample1;
     private PathChain path4_pickupSample2_part1;
     private PathChain path5_pickupSample2_part2;
@@ -61,7 +60,7 @@ public class RedNear extends AutoCommandBase {
                     // Start shooter for preload (MID)
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path1_scorePreload),
+                new AutoDriveCommand(follower, path1_scorePreload).withTimeout(3000),
                 
                 // Shoot Preload Logic
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot
@@ -74,12 +73,7 @@ public class RedNear extends AutoCommandBase {
                     intake.startIntake(); 
                     shooter.setShooterState(Shooter.ShooterState.STOP); 
                 }),
-                new AutoDriveCommand(follower, path2_pickupSample1),
-                
-                // =========================================================
-                // 1.5 Path 2.5: Go to Gate
-                // =========================================================
-                new AutoDriveCommand(follower, path2_5_gate),
+                new AutoDriveCommand(follower, path2_pickupSample1).withTimeout(3000),
                 
                 // =========================================================
                 // 2. Path 3: Score Sample 1
@@ -89,7 +83,7 @@ public class RedNear extends AutoCommandBase {
                     intake.setFullPower(false); // Reset to normal power
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path3_scoreSample1),
+                new AutoDriveCommand(follower, path3_scoreSample1).withTimeout(3000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 1
 
                 // =========================================================
@@ -99,8 +93,8 @@ public class RedNear extends AutoCommandBase {
                     intake.startIntake();
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path4_pickupSample2_part1),
-                new AutoDriveCommand(follower, path5_pickupSample2_part2),
+                new AutoDriveCommand(follower, path4_pickupSample2_part1).withTimeout(3000),
+                new AutoDriveCommand(follower, path5_pickupSample2_part2).withTimeout(3000),
 
                 // =========================================================
                 // 4. Path 6: Score Sample 2
@@ -109,7 +103,7 @@ public class RedNear extends AutoCommandBase {
                     intake.stopIntake();
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path6_scoreSample2),
+                new AutoDriveCommand(follower, path6_scoreSample2).withTimeout(3000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 2
 
                 // =========================================================
@@ -119,8 +113,8 @@ public class RedNear extends AutoCommandBase {
                     intake.startIntake();
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path7_pickupSample3_part1),
-                new AutoDriveCommand(follower, path8_pickupSample3_part2),
+                new AutoDriveCommand(follower, path7_pickupSample3_part1).withTimeout(3000),
+                new AutoDriveCommand(follower, path8_pickupSample3_part2).withTimeout(3000),
 
                 // =========================================================
                 // 6. Path 9: Score Sample 3
@@ -129,7 +123,7 @@ public class RedNear extends AutoCommandBase {
                     intake.stopIntake();
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
-                new AutoDriveCommand(follower, path9_scoreSample3),
+                new AutoDriveCommand(follower, path9_scoreSample3).withTimeout(3000),
                 new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 3
                 
                 // =========================================================
@@ -138,7 +132,7 @@ public class RedNear extends AutoCommandBase {
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                new AutoDriveCommand(follower, path10_park),
+                new AutoDriveCommand(follower, path10_park).withTimeout(3000),
                 new InstantCommand(() -> telemetry.addData("Status", "Auto Completed"))
         );
     }
@@ -167,27 +161,15 @@ public class RedNear extends AutoCommandBase {
                         RED_SAMPLE_1_POSE.getHeading()
                 )
                 .build();
-        
-        // Path 2.5: Sample 1 -> Gate
-        path2_5_gate = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_SAMPLE_1_POSE,
-                        RED_GATE_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_1_POSE.getHeading(),
-                        RED_GATE_POSE.getHeading()
-                )
-                .build();
 
-        // Path 3: Gate -> Basket
+        // Path 3: Sample 1 -> Basket
         path3_scoreSample1 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        RED_GATE_POSE,
+                        RED_SAMPLE_1_POSE,
                         RED_BASKET_POSE
                 ))
                 .setLinearHeadingInterpolation(
-                        RED_GATE_POSE.getHeading(),
+                        RED_SAMPLE_1_POSE.getHeading(),
                         RED_BASKET_POSE.getHeading()
                 )
                 .build();

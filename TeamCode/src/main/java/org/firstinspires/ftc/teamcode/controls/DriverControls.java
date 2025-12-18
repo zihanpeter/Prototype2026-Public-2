@@ -62,7 +62,7 @@ public class DriverControls {
         new FunctionalButton(
                 () -> gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= TeleOpConstants.transitFireTriggerThreshold
         ).whenHeld(
-                new TransitCommand(robot.transit, robot.intake, robot.shooter)
+                new TransitCommand(robot.transit, robot.shooter)
         );
 
         // Reverse Intake (D-Pad Right)

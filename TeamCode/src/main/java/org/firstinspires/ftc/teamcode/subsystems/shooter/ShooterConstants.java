@@ -30,7 +30,7 @@ public class ShooterConstants {
      * Negative values indicate direction.
      */
     public static double stopVelocity = -900;  // Idle speed (Same as slow/close range)
-    public static double fastVelocity = -1250; // Updated for 6000RPM motor (~75% power)
+    public static double fastVelocity = -1400; // Updated for 6000RPM motor (~75% power)
     public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
     public static double slowVelocity = -600;  // Low speed for close/safe shots (~21% power)
     public static double releaseVelocity = -200; // Threshold to consider "stopped" or "too slow"
@@ -55,6 +55,6 @@ public class ShooterConstants {
     // Servo Positions for Angle Adjustment
     // Updated based on user request: Close (0.85) -> Far (0.29)
     public static double shooterServoUpPos = 0.29;   // Position for FAST/Long range
-    public static double shooterServoMidPos = 0.57;  // Position for MID range (Calculated average)
+    public static double shooterServoMidPos = 0.29;  // Position for MID range (Calculated average)
     public static double shooterServoDownPos = 0.85; // Position for SLOW/Short range or Stowed
 }

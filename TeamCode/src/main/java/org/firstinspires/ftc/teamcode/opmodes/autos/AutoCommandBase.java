@@ -69,6 +69,11 @@ public abstract class AutoCommandBase extends LinearOpMode {
             // Run the CommandScheduler to execute scheduled commands
             CommandScheduler.getInstance().run();
             
+            // Update Follower Telemetry (Manual fallback)
+            telemetry.addData("X", follower.getPose().getX());
+            telemetry.addData("Y", follower.getPose().getY());
+            telemetry.addData("Heading", follower.getPose().getHeading());
+
             // Update telemetry
             telemetry.update();
         }
