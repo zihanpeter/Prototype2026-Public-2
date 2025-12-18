@@ -103,16 +103,7 @@ public class TeleOpSolo extends CommandOpMode {
         packet.put("IntakeTargetPower", targetIntakePower);
         
         // Draw Robot on Dashboard Field
-        Canvas fieldOverlay = packet.fieldOverlay();
-        fieldOverlay.setStrokeWidth(1);
-        fieldOverlay.setStroke("#3F51B5"); // Blue color
-        // Draw a circle representing the robot (Radius approx 9 inches)
-        fieldOverlay.strokeCircle(pose.getX(DistanceUnit.INCH), pose.getY(DistanceUnit.INCH), 9);
-        // Draw a line indicating heading
-        double heading = pose.getHeading(AngleUnit.RADIANS);
-        double x = pose.getX(DistanceUnit.INCH);
-        double y = pose.getY(DistanceUnit.INCH);
-        fieldOverlay.strokeLine(x, y, x + 9 * Math.cos(heading), y + 9 * Math.sin(heading));
+        org.firstinspires.ftc.teamcode.utils.DashboardUtil.drawRobot(packet, pose);
 
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }

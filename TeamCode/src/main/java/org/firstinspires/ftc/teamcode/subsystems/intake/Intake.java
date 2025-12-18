@@ -35,6 +35,20 @@ public class Intake extends SubsystemBase {
     }
 
     /**
+     * Starts the intake (sets isRunning to true).
+     */
+    public void startIntake() {
+        isRunning = true;
+    }
+
+    /**
+     * Stops the intake (sets isRunning to false).
+     */
+    public void stopIntake() {
+        isRunning = false;
+    }
+
+    /**
      * Toggles the intake running state (On/Off).
      */
     public void toggle() {
@@ -115,27 +129,10 @@ public class Intake extends SubsystemBase {
                 targetPower = -IntakeConstants.fullPower;
             }
 
-            /*
-            // Jamming protection (Currently Disabled): 
-            // Logic to reduce power if speed drops too low while running, indicating a jam.
-            // 20% of max theoretical speed
-            double threshold = IntakeConstants.maxVelocityTPS * IntakeConstants.jammingThresholdRatio;
-            double currentVel = Math.abs(intakeMotor.getVelocity());
-
-            // Only apply if we are trying to move fast (target > 0.5) to avoid triggering on slow moves if any
-            if (Math.abs(targetPower) > IntakeConstants.jammingPower && currentVel < threshold) {
-                targetPower = Math.signum(targetPower) * IntakeConstants.jammingPower;
-            }
-            */
-
             intakeMotor.setPower(targetPower);
         }
         else {
             intakeMotor.setPower(0);
         }
-
-        // Telemetry packet is now handled centrally in the OpMode
-        // packet.put("IntakeVelocity", getVelocity());
-        // FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }
