@@ -84,6 +84,6 @@ public class AutoConstants {
     // Parking Pose (Optional/TBD)
     // =========================================================
     // Usually park in ascent area or observation zone
-    public static final Pose BLUE_PARK_POSE = new Pose(105.477, 33.323, toRadians(90));
-    public static final Pose RED_PARK_POSE = new Pose(38.523, 33.323, toRadians(90));
+    public static final Pose BLUE_PARK_POSE = new Pose(105.477, 49.323, toRadians(90));
+    public static final Pose RED_PARK_POSE = new Pose(38.523, 49.323, toRadians(90));
 }
