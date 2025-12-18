@@ -44,7 +44,8 @@ public class TeleOpDriveCommand extends CommandBase {
                 // Drive Field Relative
                 // Note: Left Y is inverted (-gamepadEx.getLeftY()) because gamepad Y is negative up.
                 // Left X is Strafe. Right X is Turn.
-                drive.moveRobotFieldRelative(-gamepadEx.getLeftY(), gamepadEx.getLeftX(), gamepadEx.getRightX());
+                // Right X is inverted based on user request to fix turn direction.
+                drive.moveRobotFieldRelative(-gamepadEx.getLeftY(), gamepadEx.getLeftX(), -gamepadEx.getRightX());
             }
             else {
                 drive.setGamepad(false); // Signal that gamepad is inactive (enables braking)

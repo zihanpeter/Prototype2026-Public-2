@@ -67,8 +67,8 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         
         // Set encoder directions based on installation
         pinpoint.setEncoderDirections(
-            GoBildaPinpointDriver.EncoderDirection.FORWARD, 
-            GoBildaPinpointDriver.EncoderDirection.FORWARD
+            GoBildaPinpointDriver.EncoderDirection.REVERSED, 
+            GoBildaPinpointDriver.EncoderDirection.REVERSED
         );
         
         // Reset Position and IMU on initialization
@@ -137,8 +137,11 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         double botHeading = pinpoint.getHeading(DriveConstants.angleUnit) - yawOffset;
         
         // Rotate the movement vector by the negative of the robot's heading to transform field-relative input to robot-relative
-        double rotX = fun * Math.cos(-botHeading) - forward * Math.sin(-botHeading);
-        double rotY = fun * Math.sin(-botHeading) + forward * Math.cos(-botHeading);
+        // If the robot moves with the heading (Robot Centric behavior in Field Centric mode), 
+        // it usually means the heading compensation is inverted. 
+        // Trying Positive botHeading here to reverse the compensation direction.
+        double rotX = fun * Math.cos(botHeading) - forward * Math.sin(botHeading);
+        double rotY = fun * Math.sin(botHeading) + forward * Math.cos(botHeading);
 
         // Apply strafing balance correction to counteract mechanical inefficiencies in mecanum strafing
         rotX = -rotX * strafingBalance;

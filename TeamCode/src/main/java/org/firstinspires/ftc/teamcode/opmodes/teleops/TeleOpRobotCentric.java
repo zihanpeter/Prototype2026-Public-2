@@ -53,7 +53,8 @@ public class TeleOpRobotCentric extends CommandOpMode {
             // Left Stick Y: Forward/Backward (Inverted because gamepad Y is negative up)
             // Left Stick X: Strafe Left/Right
             // Right Stick X: Turn Left/Right
-            robot.drive.moveRobot(-gamepadEx1.getLeftY(), gamepadEx1.getLeftX(), gamepadEx1.getRightX());
+            // Right Stick X inverted to fix turn direction
+            robot.drive.moveRobot(-gamepadEx1.getLeftY(), gamepadEx1.getLeftX(), -gamepadEx1.getRightX());
         }, robot.drive));
 
         // --- Controls (Same as Solo) ---
