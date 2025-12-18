@@ -17,9 +17,12 @@ public class AutoConstants {
     // =========================================================
     // Start Pose
     // =========================================================
-    // Start Point: x: 40.09, y: 136.78, startDeg: 90
-    public static final Pose BLUE_START_POSE = new Pose(40.09, 136.78, toRadians(90));
-    public static final Pose RED_START_POSE = new Pose(103.91, 136.78, toRadians(90));
+    // Start Point: x: 20.043, y: 122.086, startDeg: 144
+    public static final Pose BLUE_START_POSE = new Pose(20.043, 122.086, toRadians(144));
+    public static final Pose RED_START_POSE = new Pose(123.957, 122.086, toRadians(36));
+
+    public static final Pose BLUE_FAR_START_POSE = new Pose(47.892, 8.063, toRadians(90));
+    public static final Pose RED_FAR_START_POSE = new Pose(96.108, 8.063, toRadians(90));
 
     // =========================================================
     // Scoring Pose (Basket)
