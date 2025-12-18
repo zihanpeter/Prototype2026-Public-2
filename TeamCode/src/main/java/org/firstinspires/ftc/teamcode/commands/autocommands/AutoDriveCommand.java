@@ -36,8 +36,7 @@ public class AutoDriveCommand extends CommandBase {
      */
     @Override
     public void execute() {
-        // follower.update() is now handled in AutoCommandBase main loop
-        // to ensure active holding even when command finishes.
+        follower.update();
     }
 
     /**

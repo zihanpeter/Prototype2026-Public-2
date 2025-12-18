@@ -25,7 +25,8 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 public class BlueNear extends AutoCommandBase {
 
     private PathChain path1_scorePreload;
-    private PathChain path2_pickupSample1;
+    private PathChain path2_pickupSample1_part1;
+    private PathChain path2_pickupSample1_part2;
     private PathChain path3_scoreSample1;
     private PathChain path4_pickupSample2_part1;
     private PathChain path5_pickupSample2_part2;
@@ -47,31 +48,31 @@ public class BlueNear extends AutoCommandBase {
 
         return new SequentialCommandGroup(
                 // =========================================================
-                // 0. Setup & Path 1: Move to Score Preload
+                // 0. Setup & Preload Shoot (Stationary)
                 // =========================================================
                 new InstantCommand(() -> {
                     // Start shooter for preload (MID)
                     shooter.setShooterState(Shooter.ShooterState.MID);
                 }),
+                // Shoot Preload Logic
+                new TransitCommand(transit, shooter).withTimeout(800), // Shoot immediately at Start Pose
+
                 // =========================================================
-                // 0. Preload & Start Intake
+                // 0b. Start Intake
                 // =========================================================
                 new InstantCommand(() -> {
                     intake.startIntake(); // Start continuous intake at 0.5 power
                 }),
-                new AutoDriveCommand(follower, path1_scorePreload).withTimeout(3000),
-                
-                // Shoot Preload Logic
-                new TransitCommand(transit, shooter).withTimeout(800), // Shoot
 
                 // =========================================================
-                // 1. Path 2: Pickup Sample 1
+                // 1. Path 2: Pickup Sample 1 (Start -> Intermediate -> Pickup)
                 // =========================================================
                 new InstantCommand(() -> {
                     // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP); 
                 }),
-                new AutoDriveCommand(follower, path2_pickupSample1).withTimeout(3000),
+                new AutoDriveCommand(follower, path2_pickupSample1_part1).withTimeout(3000),
+                new AutoDriveCommand(follower, path2_pickupSample1_part2).withTimeout(3000),
                 
                 // =========================================================
                 // 2. Path 3: Score Sample 1
@@ -136,26 +137,28 @@ public class BlueNear extends AutoCommandBase {
     }
 
     private void buildPaths() {
-        // Path 1: Start -> Basket
-        path1_scorePreload = follower.pathBuilder()
+        // Path 1 (Removed): Stationary Shoot at Start
+
+        // Path 2 Part 1: Start -> Sample 1 Intermediate
+        path2_pickupSample1_part1 = follower.pathBuilder()
                 .addPath(new BezierLine(
                         BLUE_START_POSE,
-                        BLUE_BASKET_POSE
+                        AutoConstants.BLUE_SAMPLE_1_INTERMEDIATE
                 ))
                 .setLinearHeadingInterpolation(
                         BLUE_START_POSE.getHeading(),
-                        BLUE_BASKET_POSE.getHeading()
+                        AutoConstants.BLUE_SAMPLE_1_INTERMEDIATE.getHeading()
                 )
                 .build();
 
-        // Path 2: Basket -> Sample 1
-        path2_pickupSample1 = follower.pathBuilder()
+        // Path 2 Part 2: Sample 1 Intermediate -> Sample 1 Pickup
+        path2_pickupSample1_part2 = follower.pathBuilder()
                 .addPath(new BezierLine(
-                        BLUE_BASKET_POSE,
+                        AutoConstants.BLUE_SAMPLE_1_INTERMEDIATE,
                         AutoConstants.BLUE_SAMPLE_1_POSE
                 ))
                 .setLinearHeadingInterpolation(
-                        BLUE_BASKET_POSE.getHeading(),
+                        AutoConstants.BLUE_SAMPLE_1_INTERMEDIATE.getHeading(),
                         AutoConstants.BLUE_SAMPLE_1_POSE.getHeading()
                 )
                 .build();
