@@ -33,8 +33,17 @@ public class AutoConstants {
     // =========================================================
     
     // Scoring Pose (Basket)
+    // Score Point: x: 67.88, y: 75.72, endDeg: 135
     public static final Pose BLUE_BASKET_POSE = new Pose(67.88, 75.72, toRadians(135));
     public static final Pose RED_BASKET_POSE = new Pose(76.12, 75.72, toRadians(45));
+
+    // =========================================================
+    // FAR Side: Shooting Pose
+    // =========================================================
+    // Calculated Heading: Angle to (11.127, 136.744) + 90 deg
+    // Vector Angle ~113.25 deg, Target Heading ~203.25 deg
+    public static final Pose BLUE_FAR_SHOOT_POSE = new Pose(62.889, 16.287, toRadians(203.25));
+    public static final Pose RED_FAR_SHOOT_POSE = new Pose(81.111, 16.287, toRadians(-23.25));
 
     // =========================================================
     // Sample Pickup Poses
