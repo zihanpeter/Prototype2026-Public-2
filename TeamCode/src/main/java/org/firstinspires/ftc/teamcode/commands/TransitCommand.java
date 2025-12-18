@@ -24,6 +24,9 @@ public class TransitCommand extends CommandBase {
         addRequirements(transit); // Only requires Transit, Shooter is read-only here
     }
 
+    /**
+     * Called repeatedly while the command is scheduled (usually while Trigger is held).
+     */
     @Override
     public void execute() {
         double currentVel = shooter.getVelocity();
@@ -105,8 +108,15 @@ public class TransitCommand extends CommandBase {
         return false; // Rely on external .withTimeout() or ParallelRaceGroup
     }
 
+    /**
+     * Called when the command ends (Trigger released).
+     * Resets mechanisms to default state.
+     *
+     * @param interrupted whether the command was interrupted/canceled
+     */
     @Override
     public void end(boolean interrupted) {
+        // Reset transit servo to DOWN
         transit.setTransitState(Transit.TransitState.DOWN);
         isPulseActive = false;
     }

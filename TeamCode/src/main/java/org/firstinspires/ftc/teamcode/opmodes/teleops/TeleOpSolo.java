@@ -22,6 +22,17 @@ import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 /**
  * Main TeleOp OpMode for Solo operation.
  * Field-Centric Driving with various subsystems integration.
+ * <p>
+ * Controls (Standard/Default):
+ * <ul>
+ *     <li><b>Left Stick:</b> Field-Centric Drive (Translate)</li>
+ *     <li><b>Right Stick X:</b> Rotate</li>
+ *     <li><b>Left Stick Button:</b> Reset Heading (re-calibrate field centric)</li>
+ *     <li><b>Left Trigger:</b> Intake (Hold to run)</li>
+ *     <li><b>Right Trigger:</b> Transit/Shoot (Hold to feed ring into flywheel)</li>
+ *     <li><b>Right Bumper:</b> Fast Shooter Speed (Hold to spin up)</li>
+ *     <li><b>Left Bumper:</b> Slow Shooter Speed (Hold to spin up)</li>
+ * </ul>
  */
 @Config
 @Configurable
@@ -36,6 +47,9 @@ public class TeleOpSolo extends CommandOpMode {
     // Flags
     private boolean[] isAuto = {false};
 
+    /**
+     * Initialize subsystems and button bindings.
+     */
     @Override
     public void initialize() {
         // Initialize Robot Hardware
@@ -55,6 +69,10 @@ public class TeleOpSolo extends CommandOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
     }
 
+    /**
+     * Main run loop.
+     * Updates telemetry and runs the Command Scheduler.
+     */
     @Override
     public void run() {
         // Run Command Scheduler

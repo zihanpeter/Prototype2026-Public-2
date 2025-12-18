@@ -7,11 +7,10 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 
 /**
  * Subsystem handling the Intake mechanism.
- * Controls the intake motor for collecting game elements.
+ * Controls the intake motor for collecting and ejecting game elements.
  */
 public class Intake extends SubsystemBase {
     public final DcMotorEx intakeMotor;
