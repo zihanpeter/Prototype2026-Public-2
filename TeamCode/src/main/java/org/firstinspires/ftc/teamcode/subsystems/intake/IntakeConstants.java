@@ -12,7 +12,7 @@ public class IntakeConstants {
 
     // Power levels
     public static double intakePower = 0.65; // Standard running power
-    public static double fullPower = 1.0;    // Max power (e.g., for reversing or fast intake)
+    public static double fullPower = 0.65;   // High power (e.g., for reversing or fast intake)
     public static double transitPower = 1;   // Power when transferring/shooting
 
     /**

@@ -16,7 +16,10 @@ public class TransitCommand extends CommandBase {
     private final Transit transit;
     private final Shooter shooter;
     private final ElapsedTime pulseTimer = new ElapsedTime();
+    private final ElapsedTime cooldownTimer = new ElapsedTime();
     private boolean isPulseActive = false;
+    private boolean isCoolingDown = false;
+    private static final double COOLDOWN_DURATION = 0.3; // 0.3 second cooldown after FAST shot
 
     public TransitCommand(Transit transit, Shooter shooter) {
         this.transit = transit;
@@ -56,10 +59,19 @@ public class TransitCommand extends CommandBase {
             inRange = false;
         }
 
+        // Handle cooldown period (FAST mode only)
+        if (isCoolingDown) {
+            if (cooldownTimer.seconds() > COOLDOWN_DURATION) {
+                isCoolingDown = false; // Cooldown finished
+            } else {
+                transit.setTransitState(Transit.TransitState.DOWN);
+                return; // Still cooling down, don't shoot
+            }
+        }
+
         if (inRange) {
             // Logic: If in range, push the ring up
-            // Use pulse for FAST mode to avoid jamming? Or just hold for now.
-            // Let's implement the Pulse Logic from previous Context
+            // Use pulse for FAST mode to avoid jamming
             
             if (shooter.shooterState == Shooter.ShooterState.FAST) {
                 if (!isPulseActive) {
@@ -67,11 +79,15 @@ public class TransitCommand extends CommandBase {
                     pulseTimer.reset();
                     transit.setTransitState(Transit.TransitState.UP);
                 } else {
-                     if (pulseTimer.seconds() > TransitConstants.pulseDuration) {
-                         transit.setTransitState(Transit.TransitState.DOWN);
-                     } else {
-                         transit.setTransitState(Transit.TransitState.UP);
-                     }
+                    if (pulseTimer.seconds() > TransitConstants.pulseDuration) {
+                        // Pulse finished, start cooldown
+                        transit.setTransitState(Transit.TransitState.DOWN);
+                        isPulseActive = false;
+                        isCoolingDown = true;
+                        cooldownTimer.reset();
+                    } else {
+                        transit.setTransitState(Transit.TransitState.UP);
+                    }
                 }
             } else {
                 // For MID/SLOW, just hold UP
@@ -119,5 +135,6 @@ public class TransitCommand extends CommandBase {
         // Reset transit servo to DOWN
         transit.setTransitState(Transit.TransitState.DOWN);
         isPulseActive = false;
+        isCoolingDown = false;
     }
 }
