@@ -49,8 +49,8 @@ public class ShooterConstants {
     public static double toleranceFastLower = 50; // Usually okay to be faster
     
     // SLOW Tolerances
-    public static double toleranceSlowUpper = 400;
-    public static double toleranceSlowLower = 300;
+    public static double toleranceSlowUpper = 250;
+    public static double toleranceSlowLower = 150;
 
     // Servo Positions for Angle Adjustment
     // Updated based on user request: Close (0.85) -> Far (0.29)
