@@ -69,6 +69,14 @@ public abstract class AutoCommandBase extends LinearOpMode {
             // Run the CommandScheduler to execute scheduled commands
             // follower.update() is now called inside AutoDriveCommand.execute()
             CommandScheduler.getInstance().run();
+
+            // Real-time position telemetry
+            Pose currentPose = follower.getPose();
+            telemetry.addData("X", String.format("%.2f", currentPose.getX()));
+            telemetry.addData("Y", String.format("%.2f", currentPose.getY()));
+            telemetry.addData("Heading (deg)", String.format("%.1f", Math.toDegrees(currentPose.getHeading())));
+            telemetry.addData("Path Active", follower.isBusy());
+            telemetry.update();
         }
 
         onAutoStopped();
