@@ -32,7 +32,7 @@ public class ShooterConstants {
     public static double stopVelocity = -900;  // Idle speed (Same as slow/close range)
     public static double fastVelocity = -1400; // Updated for 6000RPM motor (~75% power)
     public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
-    public static double slowVelocity = -600;  // Low speed for close/safe shots (~21% power)
+    public static double slowVelocity = -900;  // Low speed for close/safe shots (~21% power)
     public static double releaseVelocity = -200; // Threshold to consider "stopped" or "too slow"
     
     // Velocity tolerances for transit engagement (ticks per second)
@@ -49,8 +49,8 @@ public class ShooterConstants {
     public static double toleranceFastLower = 50; // Usually okay to be faster
     
     // SLOW Tolerances
-    public static double toleranceSlowUpper = 250;
-    public static double toleranceSlowLower = 150;
+    public static double toleranceSlowUpper = 50;
+    public static double toleranceSlowLower = 50;
 
     // Servo Positions for Angle Adjustment
     // Updated based on user request: Close (0.85) -> Far (0.29)

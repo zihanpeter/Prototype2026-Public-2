@@ -33,12 +33,12 @@ public class BlueNear extends AutoCommandBase {
     // Poses from new JSON
     private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
     private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
-    private final Pose sample1Pose = new Pose(18.936, 83.670, Math.toRadians(180));
-    private final Pose intermediatePose = new Pose(14.826, 70.312, Math.toRadians(0));
+    private final Pose sample1Pose = new Pose(20.550, 83.817, Math.toRadians(180));
+    private final Pose intermediatePose = new Pose(15.706, 70.606, Math.toRadians(0));
     private final Pose shootPose2 = new Pose(35.376, 111.706, Math.toRadians(135));
-    private final Pose sample2Pose = new Pose(18.936, 59.890, Math.toRadians(180));
+    private final Pose sample2Pose = new Pose(20.550, 59.743, Math.toRadians(180));
     private final Pose shootPose3 = new Pose(35.376, 111.853, Math.toRadians(135));
-    private final Pose sample3Pose = new Pose(18.936, 35.376, Math.toRadians(180));
+    private final Pose sample3Pose = new Pose(20.697, 35.523, Math.toRadians(180));
 
     @Override
     public Pose getStartPose() {
@@ -60,69 +60,51 @@ public class BlueNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(800),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // 2. Path 2: Shoot Pose 1 -> Sample 1 (BezierCurve) - FULL POWER
+                // 2. Path 2: Shoot Pose 1 -> Sample 1 (BezierCurve)
                 // =========================================================
-                new InstantCommand(() -> {
-                    shooter.setShooterState(Shooter.ShooterState.STOP);
-                    intake.setFullPower(true);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
                 new AutoDriveCommand(follower, path2_pickupSample1),
 
                 // =========================================================
-                // 3. Path 3: Sample 1 -> Intermediate (BezierCurve) - FULL POWER
+                // 3. Path 3: Sample 1 -> Intermediate (BezierCurve)
                 // =========================================================
                 new AutoDriveCommand(follower, path3_toIntermediate),
 
                 // =========================================================
                 // 4. Path 4: Intermediate -> Shoot Pose 2 (BezierLine)
                 // =========================================================
-                new InstantCommand(() -> {
-                    intake.setFullPower(false);
-                    shooter.setShooterState(Shooter.ShooterState.SLOW);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path4_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(800),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // 5. Path 5: Shoot Pose 2 -> Sample 2 (BezierCurve) - FULL POWER
+                // 5. Path 5: Shoot Pose 2 -> Sample 2 (BezierCurve)
                 // =========================================================
-                new InstantCommand(() -> {
-                    shooter.setShooterState(Shooter.ShooterState.STOP);
-                    intake.setFullPower(true);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
                 new AutoDriveCommand(follower, path5_pickupSample2),
 
                 // =========================================================
-                // 6. Path 6: Sample 2 -> Shoot Pose 3 (BezierLine)
+                // 6. Path 6: Sample 2 -> Shoot Pose 3 (BezierCurve)
                 // =========================================================
-                new InstantCommand(() -> {
-                    intake.setFullPower(false);
-                    shooter.setShooterState(Shooter.ShooterState.SLOW);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path6_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(800),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // 7. Path 7: Shoot Pose 3 -> Sample 3 (BezierCurve) - FULL POWER
+                // 7. Path 7: Shoot Pose 3 -> Sample 3 (BezierCurve)
                 // =========================================================
-                new InstantCommand(() -> {
-                    shooter.setShooterState(Shooter.ShooterState.STOP);
-                    intake.setFullPower(true);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
                 new AutoDriveCommand(follower, path7_pickupSample3),
 
                 // =========================================================
-                // 8. Path 8: Sample 3 -> Shoot Pose 3 (Final)
+                // 8. Path 8: Sample 3 -> Shoot Pose 3 (BezierCurve, Final)
                 // =========================================================
-                new InstantCommand(() -> {
-                    intake.setFullPower(false);
-                    shooter.setShooterState(Shooter.ShooterState.SLOW);
-                }),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path8_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(1500),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
                 // Finish
