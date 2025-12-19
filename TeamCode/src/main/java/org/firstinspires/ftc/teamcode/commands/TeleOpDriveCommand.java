@@ -48,9 +48,9 @@ public class TeleOpDriveCommand extends CommandBase {
                 
                 // Apply squared input curve while preserving sign
                 // Formula: squared = value * |value| (preserves sign, squares magnitude)
-                double forward = -rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
-                double strafe = rawLeftX * Math.abs(rawLeftX);
-                double turn = -rawRightX * Math.abs(rawRightX);   // Inverted based on user request
+                double forward = rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
+                double strafe = -rawLeftX * Math.abs(rawLeftX);
+                double turn = rawRightX * Math.abs(rawRightX);   // Inverted based on user request
                 
                 // Drive Field Relative
                 drive.moveRobotFieldRelative(forward, strafe, turn);

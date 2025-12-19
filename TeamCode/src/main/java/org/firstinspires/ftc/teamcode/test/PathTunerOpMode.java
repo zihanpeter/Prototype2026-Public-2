@@ -66,9 +66,6 @@ public class PathTunerOpMode extends OpMode {
         dashboard = FtcDashboard.getInstance();
         follower = Constants.createFollower(hardwareMap);
 
-        Pose startPose = new Pose(startX, startY, Math.toRadians(startHeadingDeg));
-        follower.setStartingPose(startPose);
-
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Path Type", getPathTypeName());
         telemetry.update();

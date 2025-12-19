@@ -1,51 +1,54 @@
 package org.firstinspires.ftc.teamcode.opmodes.autos;
 
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_BASKET_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_GATE_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_PARK_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_SAMPLE_1_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_SAMPLE_2_INTERMEDIATE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_SAMPLE_2_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_SAMPLE_3_INTERMEDIATE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_SAMPLE_3_POSE;
-import static org.firstinspires.ftc.teamcode.opmodes.autos.AutoConstants.RED_START_POSE;
-
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.pedropathing.paths.PathChain;
-
 import com.pedropathing.geometry.Pose;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
-import com.arcrobotics.ftclib.command.WaitCommand;
 
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
 import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
 /**
- * Autonomous OpMode for the Red Alliance (Basket Side).
- * Mirrored version of BlueNear.
+ * Autonomous OpMode for the Red Alliance (Near Side).
+ * Mirrored from BlueNear about X=72 axis.
+ * 
+ * Mirror formula:
+ *   newX = 144 - oldX
+ *   newY = oldY
+ *   newHeading = 180° - oldHeading
  */
 @Autonomous(name = "Red Near Auto", group = "Red")
 public class RedNear extends AutoCommandBase {
 
-    private PathChain path1_scorePreload;
-    private PathChain path2_pickupSample1;
-    private PathChain path3_scoreSample1;
-    private PathChain path4_pickupSample2_part1;
-    private PathChain path5_pickupSample2_part2;
-    private PathChain path6_scoreSample2;
-    private PathChain path7_pickupSample3_part1;
-    private PathChain path8_pickupSample3_part2;
-    private PathChain path9_scoreSample3;
-    // Optional parking path
-    private PathChain path10_park;
+    // Path chains
+    private PathChain path1_toShootPose;
+    private PathChain path2_pickupSample1;  // BezierCurve
+    private PathChain path3_toShootPose;
+    private PathChain path4_pickupSample2;  // BezierCurve
+    private PathChain path5_toShootPose;
+    private PathChain path6_pickupSample3;  // BezierCurve
+    private PathChain path7_toShootPose;
+
+    // Poses mirrored from Blue (X=72 axis)
+    // Blue: (25.509, 129.474, 144°) → Red: (118.491, 129.474, 36°)
+    private final Pose startPose = new Pose(118.491, 129.474, Math.toRadians(36));
+    // Blue: (37.200, 110.342, 135°) → Red: (106.800, 110.342, 45°)
+    private final Pose shootPose = new Pose(106.800, 110.342, Math.toRadians(45));
+    // Blue: (24.269, 83.594, 180°) → Red: (119.731, 83.594, 0°)
+    private final Pose sample1Pose = new Pose(119.731, 83.594, Math.toRadians(0));
+    // Blue: (24.446, 60.033, 180°) → Red: (119.554, 60.033, 0°)
+    private final Pose sample2Pose = new Pose(119.554, 60.033, Math.toRadians(0));
+    // Blue: (24.446, 35.587, 180°) → Red: (119.554, 35.587, 0°)
+    private final Pose sample3Pose = new Pose(119.554, 35.587, Math.toRadians(0));
 
     @Override
-    public com.pedropathing.geometry.Pose getStartPose() {
-        return AutoConstants.RED_START_POSE;
+    public Pose getStartPose() {
+        return startPose;
     }
 
     @Override
@@ -54,214 +57,137 @@ public class RedNear extends AutoCommandBase {
 
         return new SequentialCommandGroup(
                 // =========================================================
-                // 0. Setup & Path 1: Move to Score Preload
+                // 1. Path 1: Start -> Shoot Pose (Preload)
                 // =========================================================
-                new InstantCommand(() -> {
-                    // Start shooter for preload (MID)
-                    shooter.setShooterState(Shooter.ShooterState.MID);
-                }),
-                // =========================================================
-                // 0. Preload & Start Intake
-                // =========================================================
-                new InstantCommand(() -> {
-                    intake.startIntake(); // Start continuous intake
-                }),
-                new AutoDriveCommand(follower, path1_scorePreload).withTimeout(3000),
-                
-                // Shoot Preload Logic
-                new TransitCommand(transit, shooter).withTimeout(800), // Shoot
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.MID)),
+                new AutoDriveCommand(follower, path1_toShootPose),
+                new TransitCommand(transit, shooter).withTimeout(800),
 
                 // =========================================================
-                // 1. Path 2: Pickup Sample 1
+                // 2. Path 2: Shoot Pose -> Sample 1 (BezierCurve)
                 // =========================================================
                 new InstantCommand(() -> {
-                    // Intake is already running
-                    shooter.setShooterState(Shooter.ShooterState.STOP); 
-                }),
-                new AutoDriveCommand(follower, path2_pickupSample1).withTimeout(3000),
-                
-                // =========================================================
-                // 2. Path 3: Score Sample 1
-                // =========================================================
-                new InstantCommand(() -> {
-                    // Keep Intake running
-                    shooter.setShooterState(Shooter.ShooterState.MID);
-                }),
-                new AutoDriveCommand(follower, path3_scoreSample1).withTimeout(3000),
-                new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 1
-
-                // =========================================================
-                // 3. Path 4 & 5: Pickup Sample 2
-                // =========================================================
-                new InstantCommand(() -> {
-                    // Intake is already running
                     shooter.setShooterState(Shooter.ShooterState.STOP);
+                    intake.startIntake();
                 }),
-                new AutoDriveCommand(follower, path4_pickupSample2_part1).withTimeout(3000),
-                new AutoDriveCommand(follower, path5_pickupSample2_part2).withTimeout(3000),
+                new AutoDriveCommand(follower, path2_pickupSample1),
 
                 // =========================================================
-                // 4. Path 6: Score Sample 2
+                // 3. Path 3: Sample 1 -> Shoot Pose
                 // =========================================================
-                new InstantCommand(() -> {
-                    // Keep Intake running
-                    shooter.setShooterState(Shooter.ShooterState.MID);
-                }),
-                new AutoDriveCommand(follower, path6_scoreSample2).withTimeout(3000),
-                new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 2
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.MID)),
+                new AutoDriveCommand(follower, path3_toShootPose),
+                new TransitCommand(transit, shooter).withTimeout(800),
 
                 // =========================================================
-                // 5. Path 7 & 8: Pickup Sample 3
+                // 4. Path 4: Shoot Pose -> Sample 2 (BezierCurve)
                 // =========================================================
-                new InstantCommand(() -> {
-                    // Intake is already running
-                    shooter.setShooterState(Shooter.ShooterState.STOP);
-                }),
-                new AutoDriveCommand(follower, path7_pickupSample3_part1).withTimeout(3000),
-                new AutoDriveCommand(follower, path8_pickupSample3_part2).withTimeout(3000),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new AutoDriveCommand(follower, path4_pickupSample2),
 
                 // =========================================================
-                // 6. Path 9: Score Sample 3
+                // 5. Path 5: Sample 2 -> Shoot Pose
                 // =========================================================
-                new InstantCommand(() -> {
-                    // Keep Intake running
-                    shooter.setShooterState(Shooter.ShooterState.MID);
-                }),
-                new AutoDriveCommand(follower, path9_scoreSample3).withTimeout(3000),
-                new TransitCommand(transit, shooter).withTimeout(800), // Shoot Sample 3
-                
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.MID)),
+                new AutoDriveCommand(follower, path5_toShootPose),
+                new TransitCommand(transit, shooter).withTimeout(800),
+
                 // =========================================================
-                // 7. Park (Optional)
+                // 6. Path 6: Shoot Pose -> Sample 3 (BezierCurve)
+                // =========================================================
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new AutoDriveCommand(follower, path6_pickupSample3),
+
+                // =========================================================
+                // 7. Path 7: Sample 3 -> Shoot Pose (Final)
+                // =========================================================
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.MID)),
+                new AutoDriveCommand(follower, path7_toShootPose),
+                new TransitCommand(transit, shooter).withTimeout(800),
+
+                // =========================================================
+                // Finish
                 // =========================================================
                 new InstantCommand(() -> {
                     intake.stopIntake();
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                 }),
-                // new AutoDriveCommand(follower, path10_park).withTimeout(3000), // Park removed
                 new InstantCommand(() -> telemetry.addData("Status", "Auto Completed"))
         );
     }
 
     private void buildPaths() {
-        // Path 1: Start -> Basket
-        path1_scorePreload = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_START_POSE,
-                        RED_BASKET_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_START_POSE.getHeading(),
-                        RED_BASKET_POSE.getHeading()
-                )
+        // Shoot pose for Path 1 (mirrored)
+        // Blue: (37.200, 110.520, 135°) → Red: (106.800, 110.520, 45°)
+        Pose shootPose1 = new Pose(106.800, 110.520, Math.toRadians(45));
+
+        // Path 1: Start -> Shoot Pose (BezierLine)
+        // Blue: 144° -> 135° → Red: 36° -> 45°
+        path1_toShootPose = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, shootPose1))
+                .setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(45))
                 .build();
 
-        // Path 2: Basket -> Sample 1
+        // Path 2: Shoot Pose -> Sample 1 (BezierCurve, 1 control point)
+        // Blue control: (81.664, 80.936) → Red: (62.336, 80.936)
+        // Blue: 135° -> 180° → Red: 45° -> 0°
         path2_pickupSample1 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_BASKET_POSE,
-                        RED_SAMPLE_1_POSE
+                .addPath(new BezierCurve(
+                        shootPose1,
+                        new Pose(62.336, 80.936, 0),
+                        sample1Pose
                 ))
-                .setLinearHeadingInterpolation(
-                        RED_BASKET_POSE.getHeading(),
-                        RED_SAMPLE_1_POSE.getHeading()
-                )
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
                 .build();
 
-        // Path 3: Sample 1 -> Basket
-        path3_scoreSample1 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_SAMPLE_1_POSE,
-                        RED_BASKET_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_1_POSE.getHeading(),
-                        RED_BASKET_POSE.getHeading()
-                )
+        // Path 3: Sample 1 -> Shoot Pose (BezierLine)
+        // Blue: 180° -> 135° → Red: 0° -> 45°
+        path3_toShootPose = follower.pathBuilder()
+                .addPath(new BezierLine(sample1Pose, shootPose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
                 .build();
 
-        // Path 4: Basket -> Sample 2 Intermediate
-        path4_pickupSample2_part1 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_BASKET_POSE,
-                        RED_SAMPLE_2_INTERMEDIATE
+        // Path 4: Shoot Pose -> Sample 2 (BezierCurve, 2 control points)
+        // Blue controls: (59.344, 99.182), (70.149, 56.668)
+        // → Red: (84.656, 99.182), (73.851, 56.668)
+        // Blue: 135° -> 180° → Red: 45° -> 0°
+        path4_pickupSample2 = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        shootPose,
+                        new Pose(84.656, 99.182, 0),
+                        new Pose(73.851, 56.668, 0),
+                        sample2Pose
                 ))
-                .setLinearHeadingInterpolation(
-                        RED_BASKET_POSE.getHeading(),
-                        RED_SAMPLE_2_INTERMEDIATE.getHeading()
-                )
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
                 .build();
 
-        // Path 5: Sample 2 Intermediate -> Sample 2 Pickup
-        path5_pickupSample2_part2 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                       RED_SAMPLE_2_INTERMEDIATE,
-                        RED_SAMPLE_2_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_2_INTERMEDIATE.getHeading(),
-                        RED_SAMPLE_2_POSE.getHeading()
-                )
+        // Path 5: Sample 2 -> Shoot Pose (BezierLine)
+        // Blue: 180° -> 135° → Red: 0° -> 45°
+        path5_toShootPose = follower.pathBuilder()
+                .addPath(new BezierLine(sample2Pose, shootPose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
                 .build();
 
-        // Path 6: Sample 2 Pickup -> Basket
-        path6_scoreSample2 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_SAMPLE_2_POSE,
-                        RED_BASKET_POSE
+        // Path 6: Shoot Pose -> Sample 3 (BezierCurve, 3 control points)
+        // Blue controls: (61.646, 98.828), (52.081, 62.691), (68.555, 34.524)
+        // → Red: (82.354, 98.828), (91.919, 62.691), (75.445, 34.524)
+        // Blue: 135° -> 180° → Red: 45° -> 0°
+        path6_pickupSample3 = follower.pathBuilder()
+                .addPath(new BezierCurve(
+                        shootPose,
+                        new Pose(82.354, 98.828, 0),
+                        new Pose(91.919, 62.691, 0),
+                        new Pose(75.445, 34.524, 0),
+                        sample3Pose
                 ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_2_POSE.getHeading(),
-                        RED_BASKET_POSE.getHeading()
-                )
+                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
                 .build();
 
-        // Path 7: Basket -> Sample 3 Intermediate
-        path7_pickupSample3_part1 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_BASKET_POSE,
-                        RED_SAMPLE_3_INTERMEDIATE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_BASKET_POSE.getHeading(),
-                        RED_SAMPLE_3_INTERMEDIATE.getHeading()
-                )
-                .build();
-
-        // Path 8: Sample 3 Intermediate -> Sample 3 Pickup
-        path8_pickupSample3_part2 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_SAMPLE_3_INTERMEDIATE,
-                        RED_SAMPLE_3_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_3_INTERMEDIATE.getHeading(),
-                        RED_SAMPLE_3_POSE.getHeading()
-                )
-                .build();
-
-        // Path 9: Sample 3 Pickup -> Basket
-        path9_scoreSample3 = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_SAMPLE_3_POSE,
-                        RED_BASKET_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_SAMPLE_3_POSE.getHeading(),
-                        RED_BASKET_POSE.getHeading()
-                )
-                .build();
-                
-        // Path 10: Park (Optional)
-        path10_park = follower.pathBuilder()
-                .addPath(new BezierLine(
-                        RED_BASKET_POSE,
-                       RED_PARK_POSE
-                ))
-                .setLinearHeadingInterpolation(
-                        RED_BASKET_POSE.getHeading(),
-                        RED_PARK_POSE.getHeading()
-                )
+        // Path 7: Sample 3 -> Shoot Pose (BezierLine)
+        // Blue: 180° -> 135° → Red: 0° -> 45°
+        path7_toShootPose = follower.pathBuilder()
+                .addPath(new BezierLine(sample3Pose, shootPose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
                 .build();
     }
 }
-

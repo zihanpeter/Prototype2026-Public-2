@@ -23,7 +23,7 @@ public class DriveConstants {
     // xPoseDW corresponds to the Strafe Pod's X offset.
     // yPoseDW corresponds to the Forward Pod's Y offset.
     // Values are converted from mm (measured) to inches.
-    public static double xPoseDW = 32.0 / 25.4, yPoseDW = -171.5 / 25.4;
+    public static double xPoseDW = -171 / 25.4, yPoseDW = 32.0 / 25.4, headingDW = Math.PI;
     
     // OTOS Offsets (Legacy/Alternative)
     public static double xPoseOTOS = Units.mmToInches(-173), yPoseOTOS = 0, headingPoseOTOS = -Math.PI / 2;
