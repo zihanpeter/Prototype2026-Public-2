@@ -109,23 +109,17 @@ public class Intake extends SubsystemBase {
     /**
      * Periodic update method.
      * Controls the motor power based on the current state flags.
+     * Always runs at intakePower (0.65), unless reversed.
      */
     @Override
     public void periodic() {
         if (isRunning) {
-            double targetPower = IntakeConstants.intakePower;
-            
-            // Priority logic for power selection
-            if (isShooting) {
-                targetPower = IntakeConstants.transitPower;
-            } else if (isFullPower) {
-                targetPower = IntakeConstants.fullPower;
-            }
+            double targetPower = IntakeConstants.intakePower; // Always 0.65
 
             // Reverse logic
             if (isReversed) {
-                // When reversed, use full power (negative)
-                targetPower = -IntakeConstants.fullPower;
+                // When reversed, use negative power
+                targetPower = -IntakeConstants.intakePower;
             }
 
             intakeMotor.setPower(targetPower);

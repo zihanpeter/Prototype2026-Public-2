@@ -17,9 +17,14 @@ public class TransitCommand extends CommandBase {
     private final Shooter shooter;
     private final ElapsedTime pulseTimer = new ElapsedTime();
     private final ElapsedTime cooldownTimer = new ElapsedTime();
+    private final ElapsedTime finishDelayTimer = new ElapsedTime();
     private boolean isPulseActive = false;
     private boolean isCoolingDown = false;
+    private int shotCount = 0; // Count of completed shots (for FAST mode)
+    private boolean isFinishing = false; // Whether we've completed required shots and are waiting for delay
     private static final double COOLDOWN_DURATION = 0.3; // 0.3 second cooldown after FAST shot
+    private static final int REQUIRED_SHOTS_FAST = 3; // Number of shots required for FAST mode
+    private static final double FINISH_DELAY = 0.2; // Delay after completing shots
 
     public TransitCommand(Transit transit, Shooter shooter) {
         this.transit = transit;
@@ -74,6 +79,16 @@ public class TransitCommand extends CommandBase {
             // Use pulse for FAST mode to avoid jamming
             
             if (shooter.shooterState == Shooter.ShooterState.FAST) {
+                // Check if we've already completed required shots
+                if (shotCount >= REQUIRED_SHOTS_FAST) {
+                    transit.setTransitState(Transit.TransitState.DOWN);
+                    if (!isFinishing) {
+                        isFinishing = true;
+                        finishDelayTimer.reset();
+                    }
+                    return; // Don't shoot anymore
+                }
+                
                 if (!isPulseActive) {
                     isPulseActive = true;
                     pulseTimer.reset();
@@ -85,6 +100,7 @@ public class TransitCommand extends CommandBase {
                         isPulseActive = false;
                         isCoolingDown = true;
                         cooldownTimer.reset();
+                        shotCount++; // Increment shot count
                     } else {
                         transit.setTransitState(Transit.TransitState.UP);
                     }
@@ -103,25 +119,16 @@ public class TransitCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        // For Auto: You might want this command to finish after a certain time or condition?
-        // But usually TransitCommand is a "while active" command or triggered instantly.
-        // If used in SequentialCommandGroup, it needs to finish!
-        
-        // AUTO MODE FIX:
-        // If this command is used in Auto sequence (new TransitCommand(...)), it acts as a "Shoot Once" action.
-        // We should wait until we have successfully pulsed/held for a duration.
-        
-        // Let's assume if we are in Pulse mode and timer > duration + cushion, we are done.
-        // Or for simplicity in Auto, we can just use a Timeout decoration externally.
-        // But to make it standalone:
-        
-        if (isPulseActive && pulseTimer.seconds() > TransitConstants.pulseDuration + 0.2) {
-             return true; 
+        // FAST mode: Finish after completing REQUIRED_SHOTS_FAST shots + delay
+        if (shooter.shooterState == Shooter.ShooterState.FAST) {
+            if (isFinishing && finishDelayTimer.seconds() > FINISH_DELAY) {
+                return true;
+            }
+            return false;
         }
         
-        // For non-pulse modes (MID), we need a timer too to know when "shot is done"
-        // Let's add a simple internal timer for the whole command
-        return false; // Rely on external .withTimeout() or ParallelRaceGroup
+        // For MID/SLOW modes: Rely on external .withTimeout()
+        return false;
     }
 
     /**
@@ -136,5 +143,7 @@ public class TransitCommand extends CommandBase {
         transit.setTransitState(Transit.TransitState.DOWN);
         isPulseActive = false;
         isCoolingDown = false;
+        shotCount = 0;
+        isFinishing = false;
     }
 }
