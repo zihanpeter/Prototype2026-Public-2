@@ -64,21 +64,11 @@ public abstract class AutoCommandBase extends LinearOpMode {
 
         waitForStart();
 
-        // Main Loop
+        // Main Loop (aligned with Prototype2026-Public)
         while (opModeIsActive() && !isStopRequested()) {
-            // Update Follower (Run this every loop to maintain position/hold)
-            follower.update();
-
             // Run the CommandScheduler to execute scheduled commands
+            // follower.update() is now called inside AutoDriveCommand.execute()
             CommandScheduler.getInstance().run();
-            
-            // Update Follower Telemetry (Manual fallback)
-            telemetry.addData("X", follower.getPose().getX());
-            telemetry.addData("Y", follower.getPose().getY());
-            telemetry.addData("Heading", follower.getPose().getHeading());
-
-            // Update telemetry
-            telemetry.update();
         }
 
         onAutoStopped();

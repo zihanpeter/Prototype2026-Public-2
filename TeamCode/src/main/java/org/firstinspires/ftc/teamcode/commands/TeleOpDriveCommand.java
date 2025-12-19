@@ -31,21 +31,29 @@ public class TeleOpDriveCommand extends CommandBase {
 
     /**
      * Executes the drive logic.
-     * Reads gamepad inputs, applies deadband, and sends field-centric drive commands.
+     * Reads gamepad inputs, applies deadband and squared input curve, and sends field-centric drive commands.
      * Active braking is enabled via setGamepad() when inputs are below deadband.
      */
     @Override
     public void execute() {
         if (!isAuto[0]) {
+            // Get raw inputs
+            double rawLeftX = gamepadEx.getLeftX();
+            double rawLeftY = gamepadEx.getLeftY();
+            double rawRightX = gamepadEx.getRightX();
+            
             // check for input outside deadband
-            if (Math.abs(gamepadEx.getLeftX()) > DriveConstants.deadband || Math.abs(gamepadEx.getLeftY()) > DriveConstants.deadband || Math.abs(gamepadEx.getRightX()) > DriveConstants.deadband) {
+            if (Math.abs(rawLeftX) > DriveConstants.deadband || Math.abs(rawLeftY) > DriveConstants.deadband || Math.abs(rawRightX) > DriveConstants.deadband) {
                 drive.setGamepad(true); // Signal that gamepad is active (disables automatic braking if implemented)
                 
+                // Apply squared input curve while preserving sign
+                // Formula: squared = value * |value| (preserves sign, squares magnitude)
+                double forward = -rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
+                double strafe = rawLeftX * Math.abs(rawLeftX);
+                double turn = -rawRightX * Math.abs(rawRightX);   // Inverted based on user request
+                
                 // Drive Field Relative
-                // Note: Left Y is inverted (-gamepadEx.getLeftY()) because gamepad Y is negative up.
-                // Left X is Strafe. Right X is Turn.
-                // Right X is inverted based on user request to fix turn direction.
-                drive.moveRobotFieldRelative(-gamepadEx.getLeftY(), gamepadEx.getLeftX(), -gamepadEx.getRightX());
+                drive.moveRobotFieldRelative(forward, strafe, turn);
             }
             else {
                 drive.setGamepad(false); // Signal that gamepad is inactive (enables braking)
