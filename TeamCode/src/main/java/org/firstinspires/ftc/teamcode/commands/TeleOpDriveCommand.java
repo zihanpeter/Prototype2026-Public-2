@@ -33,6 +33,7 @@ public class TeleOpDriveCommand extends CommandBase {
      * Executes the drive logic.
      * Reads gamepad inputs, applies deadband and squared input curve, and sends field-centric drive commands.
      * Active braking is enabled via setGamepad() when inputs are below deadband.
+     * D-Pad Left/Right can also be used for rotation.
      */
     @Override
     public void execute() {
@@ -42,8 +43,21 @@ public class TeleOpDriveCommand extends CommandBase {
             double rawLeftY = gamepadEx.getLeftY();
             double rawRightX = gamepadEx.getRightX();
             
-            // check for input outside deadband
-            if (Math.abs(rawLeftX) > DriveConstants.deadband || Math.abs(rawLeftY) > DriveConstants.deadband || Math.abs(rawRightX) > DriveConstants.deadband) {
+            // D-Pad rotation input
+            double dpadTurn = 0;
+            if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_LEFT)) {
+                dpadTurn = -DriveConstants.dpadTurnSpeed; // Turn left (negative)
+            } else if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_RIGHT)) {
+                dpadTurn = DriveConstants.dpadTurnSpeed;  // Turn right (positive)
+            }
+            
+            // check for input outside deadband OR D-Pad is pressed
+            boolean hasInput = Math.abs(rawLeftX) > DriveConstants.deadband || 
+                               Math.abs(rawLeftY) > DriveConstants.deadband || 
+                               Math.abs(rawRightX) > DriveConstants.deadband ||
+                               dpadTurn != 0;
+            
+            if (hasInput) {
                 drive.setGamepad(true); // Signal that gamepad is active (disables automatic braking if implemented)
                 
                 // Apply squared input curve while preserving sign
@@ -51,6 +65,9 @@ public class TeleOpDriveCommand extends CommandBase {
                 double forward = rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
                 double strafe = -rawLeftX * Math.abs(rawLeftX);
                 double turn = rawRightX * Math.abs(rawRightX);   // Inverted based on user request
+                
+                // Add D-Pad turn input
+                turn += dpadTurn;
                 
                 // Drive Field Relative
                 drive.moveRobotFieldRelative(forward, strafe, turn);

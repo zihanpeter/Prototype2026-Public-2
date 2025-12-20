@@ -114,12 +114,18 @@ public class Intake extends SubsystemBase {
     @Override
     public void periodic() {
         if (isRunning) {
-            double targetPower = IntakeConstants.intakePower; // Always 0.65
+            double targetPower;
+            
+            // Full power mode overrides standard power
+            if (isFullPower) {
+                targetPower = IntakeConstants.fullPower; // 1.0
+            } else {
+                targetPower = IntakeConstants.intakePower; // 0.65
+            }
 
             // Reverse logic
             if (isReversed) {
-                // When reversed, use negative power
-                targetPower = -IntakeConstants.intakePower;
+                targetPower = -targetPower;
             }
 
             intakeMotor.setPower(targetPower);

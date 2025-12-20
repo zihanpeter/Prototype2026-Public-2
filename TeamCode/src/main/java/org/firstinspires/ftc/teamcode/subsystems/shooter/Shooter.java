@@ -20,10 +20,17 @@ public class Shooter extends SubsystemBase {
     public final DcMotorEx rightShooter;
     public final DcMotorEx leftShooter;
     public final Servo shooterServo;
+    public final Servo brakeServo;
     public final TelemetryPacket packet = new TelemetryPacket();
     
     // Flag indicating if the shooter is up to speed
     public static boolean readyToShoot = false;
+    
+    // Flag indicating if the brake is engaged
+    public static boolean brakeEngaged = false;
+    
+    // Flag for manual brake override (takes priority over auto brake)
+    public static boolean manualBrakeOverride = false;
     
     // PID Controller (Currently unused, replaced by Bang-Bang/Feedforward)
     public final PIDController pidController;
@@ -41,8 +48,13 @@ public class Shooter extends SubsystemBase {
         rightShooter = hardwareMap.get(DcMotorEx.class, ShooterConstants.rightShooterName);
         leftShooter = hardwareMap.get(DcMotorEx.class, ShooterConstants.leftShooterName);
         shooterServo = hardwareMap.get(Servo.class, ShooterConstants.shooterServoName);
+        brakeServo = hardwareMap.get(Servo.class, ShooterConstants.brakeServoName);
         pidController = new PIDController(ShooterConstants.kP,
                 ShooterConstants.kI, ShooterConstants.kD);
+        
+        // Initialize brake to released position
+        brakeServo.setPosition(ShooterConstants.brakeServoReleasedPos);
+        brakeEngaged = false;
     }
 
     /**
@@ -98,6 +110,57 @@ public class Shooter extends SubsystemBase {
     }
 
     /**
+     * Engages the brake servo to stop the flywheel.
+     */
+    public void engageBrake() {
+        brakeServo.setPosition(ShooterConstants.brakeServoEngagedPos);
+        brakeEngaged = true;
+    }
+
+    /**
+     * Releases the brake servo to allow the flywheel to spin.
+     */
+    public void releaseBrake() {
+        brakeServo.setPosition(ShooterConstants.brakeServoReleasedPos);
+        brakeEngaged = false;
+    }
+
+    /**
+     * Toggles the brake servo state.
+     */
+    public void toggleBrake() {
+        if (brakeEngaged) {
+            releaseBrake();
+        } else {
+            engageBrake();
+        }
+    }
+
+    /**
+     * Checks if the brake is currently engaged.
+     * @return True if brake is engaged.
+     */
+    public boolean isBrakeEngaged() {
+        return brakeEngaged;
+    }
+
+    /**
+     * Manually engages the brake (overrides auto brake logic).
+     */
+    public void manualEngageBrake() {
+        manualBrakeOverride = true;
+        engageBrake();
+    }
+
+    /**
+     * Manually releases the brake (returns control to auto brake logic).
+     */
+    public void manualReleaseBrake() {
+        manualBrakeOverride = false;
+        releaseBrake();
+    }
+
+    /**
      * Periodic update method.
      * Implements Bang-Bang control with Feedforward for velocity regulation.
      */
@@ -107,6 +170,29 @@ public class Shooter extends SubsystemBase {
         double currentVel = rightShooter.getVelocity();
         double targetVel = shooterState.shooterVelocity;
         double power;
+
+        // =================================================================
+        // Auto Brake Logic
+        // If current velocity exceeds target by threshold, engage brake
+        // Velocities are negative, so "exceeds" means more negative
+        // currentVel < targetVel - threshold means spinning too fast
+        // Skip auto logic if manual override is active
+        // =================================================================
+        if (!manualBrakeOverride) {
+            double threshold = ShooterConstants.brakeTriggerThresholdTPS;
+            if (currentVel < targetVel - threshold) {
+                // Spinning too fast, engage brake
+                if (!brakeEngaged) {
+                    engageBrake();
+                }
+            } else {
+                // Speed is acceptable, release brake
+                if (brakeEngaged) {
+                    releaseBrake();
+                }
+            }
+        }
+        // If manualBrakeOverride is true, brake state is controlled manually
 
         // Bang-Bang Control with Simple Feedforward Logic
         // Note: Velocities are negative (e.g., Target: -1500)

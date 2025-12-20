@@ -46,4 +46,8 @@ public class DriveConstants {
     // Gamepad Input Deadband
     // Minimum input value required to trigger robot movement.
     public static double deadband = 0.03;
+    
+    // D-Pad Turn Speed
+    // Speed for rotation when using D-Pad Left/Right
+    public static double dpadTurnSpeed = 0.3;
 }

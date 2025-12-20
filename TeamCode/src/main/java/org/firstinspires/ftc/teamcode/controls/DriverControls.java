@@ -65,9 +65,9 @@ public class DriverControls {
                 new TransitCommand(robot.transit, robot.shooter)
         );
 
-        // Reverse Intake (D-Pad Right)
+        // Reverse Intake (D-Pad Up)
         new FunctionalButton(
-                () -> gamepad.getButton(GamepadKeys.Button.DPAD_RIGHT)
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_UP)
         ).whenHeld(
                 new InstantCommand(() -> robot.intake.setReversed(true))
         ).whenReleased(
@@ -81,6 +81,15 @@ public class DriverControls {
                 new InstantCommand(() -> robot.intake.setFullPower(true))
         ).whenReleased(
                 new InstantCommand(() -> robot.intake.setFullPower(false))
+        );
+
+        // Manual Brake Control (D-Pad Down)
+        new FunctionalButton(
+                () -> gamepad.getButton(GamepadKeys.Button.DPAD_DOWN)
+        ).whenHeld(
+                new InstantCommand(() -> robot.shooter.manualEngageBrake())
+        ).whenReleased(
+                new InstantCommand(() -> robot.shooter.manualReleaseBrake())
         );
     }
 }

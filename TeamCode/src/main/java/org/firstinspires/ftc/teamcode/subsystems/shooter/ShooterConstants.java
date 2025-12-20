@@ -11,6 +11,7 @@ public class ShooterConstants {
     public static String leftShooterName = "leftShooterMotor";
     public static String rightShooterName = "rightShooterMotor";
     public static String shooterServoName = "shooterServo";
+    public static String brakeServoName = "brakeServo";
 
     // PID Tolerance (ticks) - Used for telemetry or checks
     public static double shooterEpsilon = 20;
@@ -29,7 +30,7 @@ public class ShooterConstants {
      * Target Velocities (in Ticks Per Second)
      * Negative values indicate direction.
      */
-    public static double stopVelocity = -900;  // Idle speed (Same as slow/close range)
+    public static double stopVelocity = -600;  // Idle speed
     public static double fastVelocity = -1400; // Updated for 6000RPM motor (~75% power)
     public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
     public static double slowVelocity = -900;  // Low speed for close/safe shots (~21% power)
@@ -57,4 +58,13 @@ public class ShooterConstants {
     public static double shooterServoUpPos = 0.29;   // Position for FAST/Long range
     public static double shooterServoMidPos = 0.29;  // Position for MID range (Calculated average)
     public static double shooterServoDownPos = 0.85; // Position for SLOW/Short range or Stowed
+
+    // Brake Servo Positions
+    public static double brakeServoEngagedPos = 0.81;  // Brake engaged (stopping flywheel)
+    public static double brakeServoReleasedPos = 0.77; // Brake released (flywheel free to spin)
+
+    // Auto Brake Threshold
+    // 100 RPM = 100/60 * 28 ticks = ~47 TPS
+    // If current velocity exceeds target by this amount, engage brake
+    public static double brakeTriggerThresholdTPS = 47.0; // ~100 RPM
 }
