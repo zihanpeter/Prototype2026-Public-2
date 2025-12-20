@@ -14,20 +14,14 @@ import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
 /**
- * Autonomous OpMode for the Red Alliance (Near Side).
- * Multi-Gate version: Shoots at intermediate position after each sample pickup.
- * Mirrored from BlueNearMultiGate about X=72 axis.
+ * Autonomous OpMode for the Blue Alliance (Near Side).
+ * Custom version: Copy of Multi-Gate for tuning.
  * 10 paths total.
- * 
- * Mirror formula:
- *   newX = 144 - oldX
- *   newY = oldY
- *   newHeading = 180° - oldHeading
  */
-@Autonomous(name = "Red Near Multi-Gate", group = "Red")
-public class RedNearMultiGate extends AutoCommandBase {
+@Autonomous(name = "Blue Near Custom", group = "Blue")
+public class BlueNearCustom extends AutoCommandBase {
 
-    // Path chains (11 paths - added parking)
+    // Path chains (10 paths - Sample 3 goes directly to Shoot, added parking)
     private PathChain path1_toShootPose;
     private PathChain path2_toSample1;
     private PathChain path3_toGate;
@@ -36,29 +30,19 @@ public class RedNearMultiGate extends AutoCommandBase {
     private PathChain path6_toGate;
     private PathChain path7_toShootPose;
     private PathChain path8_toSample3;
-    private PathChain path9_toGate;
-    private PathChain path10_toShootPose;
-    private PathChain path11_toParking;
+    private PathChain path9_toShootPose;
+    private PathChain path10_toParking;
 
-    // Poses mirrored from Blue (X=72 axis)
-    // Blue: (25.509, 129.474, 144°) → Red: (118.491, 129.474, 36°)
-    private final Pose startPose = new Pose(118.491, 129.474, Math.toRadians(36));
-    // Blue: (35.229, 112.0, 135°) → Red: (108.771, 112.0, 45°)
-    private final Pose shootPose1 = new Pose(108.771, 112.0, Math.toRadians(45));
-    // Blue: (20.318, 84.175, 180°) → Red: (123.682, 84.175, 0°)
-    private final Pose sample1Pose = new Pose(123.682, 84.175, Math.toRadians(0));
-    // Blue: (15.964, 72.887, 90°) → Red: (128.036, 72.887, 90°)
-    private final Pose gatePose = new Pose(128.197, 76.434, Math.toRadians(90));
-    // Blue: (35.315, 111.910, 135°) → Red: (108.685, 111.910, 45°)
-    private final Pose shootPose2 = new Pose(108.685, 111.910, Math.toRadians(45));
-    // Blue: (21.769, 59.664, 180°) → Red: (122.231, 59.664, 0°)
-    private final Pose sample2Pose = new Pose(122.231, 59.664, Math.toRadians(0));
-    // Blue: (21.447, 35.637, 180°) → Red: (122.553, 35.637, 0°)
-    private final Pose sample3Pose = new Pose(122.553, 35.637, Math.toRadians(0));
-    // Blue: (35.476, 111.910, 135°) → Red: (108.524, 111.910, 45°)
-    private final Pose shootPose3 = new Pose(108.524, 111.910, Math.toRadians(45));
-    // Blue: (18.060, 95.946, 180°) → Red: (125.940, 95.946, 0°)
-    private final Pose parkingPose = new Pose(125.940, 95.946, Math.toRadians(0));
+    // Poses from JSON (updated - gate heading changed to 90°)
+    private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
+    private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
+    private final Pose sample1Pose = new Pose(20.318, 84.175, Math.toRadians(180));
+    private final Pose gatePose = new Pose(15.803, 76.434, Math.toRadians(90));
+    private final Pose shootPose2 = new Pose(35.315, 111.910, Math.toRadians(135));
+    private final Pose sample2Pose = new Pose(21.769, 59.664, Math.toRadians(180));
+    private final Pose sample3Pose = new Pose(21.447, 35.637, Math.toRadians(180));
+    private final Pose shootPose3 = new Pose(35.476, 111.910, Math.toRadians(135));
+    private final Pose parkingPose = new Pose(18.060, 95.946, Math.toRadians(180));
 
     @Override
     public Pose getStartPose() {
@@ -125,22 +109,17 @@ public class RedNearMultiGate extends AutoCommandBase {
                 new AutoDriveCommand(follower, path8_toSample3),
 
                 // =========================================================
-                // 9. Path 9: Sample 3 -> Gate (Curve)
-                // =========================================================
-                new AutoDriveCommand(follower, path9_toGate),
-
-                // =========================================================
-                // 10. Path 10: Gate -> Shoot Pose (Line, final)
+                // 9. Path 9: Sample 3 -> Shoot Pose (Line, final)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
-                new AutoDriveCommand(follower, path10_toShootPose),
+                new AutoDriveCommand(follower, path9_toShootPose),
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // 11. Path 11: Shoot Pose -> Parking
+                // 10. Path 10: Shoot Pose -> Parking
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
-                new AutoDriveCommand(follower, path11_toParking),
+                new AutoDriveCommand(follower, path10_toParking),
 
                 // =========================================================
                 // Finish
@@ -155,117 +134,98 @@ public class RedNearMultiGate extends AutoCommandBase {
 
     private void buildPaths() {
         // Path 1: Start -> Shoot Pose 1 (BezierLine)
-        // Blue: 144°->135° → Red: 36°->45°
+        // startDeg=144 -> endDeg=135
         path1_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, shootPose1))
-                .setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(135))
                 .build();
 
         // Path 2: Shoot Pose 1 -> Sample 1 (BezierCurve, 2 control points)
-        // Blue: 135°->180° → Red: 45°->0°
-        // Blue ctrl: (59.180, 112.394), (75.628, 77.080) → Red: (84.820, 112.394), (68.372, 77.080)
+        // startDeg=135 -> endDeg=180
         path2_toSample1 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         shootPose1,
-                        new Pose(84.820, 112.394, 0),
-                        new Pose(68.372, 77.080, 0),
+                        new Pose(59.180, 112.394, 0),
+                        new Pose(75.628, 77.080, 0),
                         sample1Pose
                 ))
-                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
         // Path 3: Sample 1 -> Gate (BezierCurve, 1 control point)
-        // Blue: 180°->90° → Red: 0°->90°
-        // Blue ctrl: (37.733, 74.661) → Red: (106.267, 74.661)
+        // startDeg=180 -> endDeg=90
         path3_toGate = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         sample1Pose,
-                        new Pose(106.267, 74.661, 0),
+                        new Pose(37.733, 74.661, 0),
                         gatePose
                 ))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
                 .build();
 
         // Path 4: Gate -> Shoot Pose 2 (BezierLine)
-        // Blue: 90°->135° → Red: 90°->45°
+        // startDeg=90 -> endDeg=135
         path4_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(gatePose, shootPose2))
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         // Path 5: Shoot Pose 2 -> Sample 2 (BezierCurve, 3 control points)
-        // Blue: 135°->180° → Red: 45°->0°
-        // Blue ctrl: (53.859, 114.813), (70.952, 82.562), (58.213, 53.536)
-        // → Red: (90.141, 114.813), (73.048, 82.562), (85.787, 53.536)
+        // startDeg=135 -> endDeg=180
         path5_toSample2 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         shootPose2,
-                        new Pose(90.141, 114.813, 0),
-                        new Pose(73.048, 82.562, 0),
-                        new Pose(85.787, 53.536, 0),
+                        new Pose(53.859, 114.813, 0),
+                        new Pose(70.952, 82.562, 0),
+                        new Pose(58.213, 53.536, 0),
                         sample2Pose
                 ))
-                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
         // Path 6: Sample 2 -> Gate (BezierCurve, 1 control point)
-        // Blue: 180°->90° → Red: 0°->90°
-        // Blue ctrl: (44.184, 70.146) → Red: (99.816, 70.146)
+        // startDeg=180 -> endDeg=90
         path6_toGate = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         sample2Pose,
-                        new Pose(99.816, 70.146, 0),
+                        new Pose(44.184, 70.146, 0),
                         gatePose
                 ))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
                 .build();
 
         // Path 7: Gate -> Shoot Pose 2 (BezierLine)
-        // Blue: 90°->135° → Red: 90°->45°
+        // startDeg=90 -> endDeg=135
         path7_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(gatePose, shootPose2))
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
+                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
         // Path 8: Shoot Pose 2 -> Sample 3 (BezierCurve, 3 control points)
-        // Blue: 135°->180° → Red: 45°->0°
-        // Blue ctrl: (85.787, 107.395), (44.022, 53.375), (66.759, 31.283)
-        // → Red: (58.213, 107.395), (99.978, 53.375), (77.241, 31.283)
+        // startDeg=135 -> endDeg=180
         path8_toSample3 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         shootPose2,
-                        new Pose(58.213, 107.395, 0),
-                        new Pose(99.978, 53.375, 0),
-                        new Pose(77.241, 31.283, 0),
+                        new Pose(85.787, 107.395, 0),
+                        new Pose(44.022, 53.375, 0),
+                        new Pose(66.759, 31.283, 0),
                         sample3Pose
                 ))
-                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
-        // Path 9: Sample 3 -> Gate (BezierCurve, 1 control point)
-        // Blue: 180°->90° → Red: 0°->90°
-        // Blue ctrl: (54.181, 74.983) → Red: (89.819, 74.983)
-        path9_toGate = follower.pathBuilder()
-                .addPath(new BezierCurve(
-                        sample3Pose,
-                        new Pose(89.819, 74.983, 0),
-                        gatePose
-                ))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(90))
+        // Path 9: Sample 3 -> Shoot Pose 1 (BezierLine, direct)
+        // startDeg=180 -> endDeg=135
+        path9_toShootPose = follower.pathBuilder()
+                .addPath(new BezierLine(sample3Pose, shootPose1))
+                .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
                 .build();
 
-        // Path 10: Gate -> Shoot Pose 3 (BezierLine)
-        // Blue: 90°->135° → Red: 90°->45°
-        path10_toShootPose = follower.pathBuilder()
-                .addPath(new BezierLine(gatePose, shootPose3))
-                .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
-                .build();
-
-        // Path 11: Shoot Pose 3 -> Parking (BezierLine)
-        // Blue: 135°->180° → Red: 45°->0°
-        path11_toParking = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose3, parkingPose))
-                .setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
+        // Path 10: Shoot Pose 1 -> Parking (BezierLine)
+        // startDeg=135 -> endDeg=180
+        path10_toParking = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose1, parkingPose))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
     }
 }

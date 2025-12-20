@@ -21,7 +21,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 @Autonomous(name = "Blue Near Multi-Gate", group = "Blue")
 public class BlueNearMultiGate extends AutoCommandBase {
 
-    // Path chains (10 paths)
+    // Path chains (11 paths - added parking)
     private PathChain path1_toShootPose;
     private PathChain path2_toSample1;
     private PathChain path3_toGate;
@@ -32,16 +32,18 @@ public class BlueNearMultiGate extends AutoCommandBase {
     private PathChain path8_toSample3;
     private PathChain path9_toGate;
     private PathChain path10_toShootPose;
+    private PathChain path11_toParking;
 
     // Poses from JSON (updated - gate heading changed to 90°)
     private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
     private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
     private final Pose sample1Pose = new Pose(20.318, 84.175, Math.toRadians(180));
-    private final Pose gatePose = new Pose(15.964, 72.887, Math.toRadians(90));
+    private final Pose gatePose = new Pose(15.803, 76.434, Math.toRadians(90));
     private final Pose shootPose2 = new Pose(35.315, 111.910, Math.toRadians(135));
     private final Pose sample2Pose = new Pose(21.769, 59.664, Math.toRadians(180));
     private final Pose sample3Pose = new Pose(21.447, 35.637, Math.toRadians(180));
     private final Pose shootPose3 = new Pose(35.476, 111.910, Math.toRadians(135));
+    private final Pose parkingPose = new Pose(18.060, 95.946, Math.toRadians(180));
 
     @Override
     public Pose getStartPose() {
@@ -118,6 +120,12 @@ public class BlueNearMultiGate extends AutoCommandBase {
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path10_toShootPose),
                 new TransitCommand(transit, shooter).withTimeout(1300),
+
+                // =========================================================
+                // 11. Path 11: Shoot Pose -> Parking
+                // =========================================================
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new AutoDriveCommand(follower, path11_toParking),
 
                 // =========================================================
                 // Finish
@@ -228,6 +236,13 @@ public class BlueNearMultiGate extends AutoCommandBase {
         path10_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(gatePose, shootPose3))
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
+                .build();
+
+        // Path 11: Shoot Pose 3 -> Parking (BezierLine)
+        // startDeg=135 -> endDeg=180
+        path11_toParking = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose3, parkingPose))
+                .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
     }
 }
