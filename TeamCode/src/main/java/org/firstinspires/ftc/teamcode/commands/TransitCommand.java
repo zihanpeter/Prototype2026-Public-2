@@ -22,7 +22,7 @@ public class TransitCommand extends CommandBase {
     private boolean isCoolingDown = false;
     private int shotCount = 0; // Count of completed shots (for FAST mode)
     private boolean isFinishing = false; // Whether we've completed required shots and are waiting for delay
-    private static final double COOLDOWN_DURATION = 0.3; // 0.3 second cooldown after FAST shot
+    private static final double COOLDOWN_DURATION = 0.5; // 0.5 second cooldown after FAST shot
     private static final int REQUIRED_SHOTS_FAST = 3; // Number of shots required for FAST mode
     private static final double FINISH_DELAY = 0.2; // Delay after completing shots
 

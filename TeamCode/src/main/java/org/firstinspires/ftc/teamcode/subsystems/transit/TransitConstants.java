@@ -16,5 +16,5 @@ public class TransitConstants {
 
     // Duration (in seconds) for the pulse logic (used in FAST mode)
     // Servo lifts for this duration then retracts
-    public static double pulseDuration = 0.25;
+    public static double pulseDuration = 0.1;
 }

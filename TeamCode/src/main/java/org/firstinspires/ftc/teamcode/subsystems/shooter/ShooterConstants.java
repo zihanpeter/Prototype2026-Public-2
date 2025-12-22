@@ -46,8 +46,8 @@ public class ShooterConstants {
     public static double toleranceMidLower = 50; // Allow being slightly faster
     
     // FAST Tolerances
-    public static double toleranceFastUpper = 50;
-    public static double toleranceFastLower = 50; // Usually okay to be faster
+    public static double toleranceFastUpper = 20;
+    public static double toleranceFastLower = 20; // Usually okay to be faster
     
     // SLOW Tolerances
     public static double toleranceSlowUpper = 50;

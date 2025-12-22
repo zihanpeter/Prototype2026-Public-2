@@ -73,7 +73,10 @@ public class RedNearMultiGate extends AutoCommandBase {
                 // =========================================================
                 // Initialize: Start intake at 0.65 power
                 // =========================================================
-                new InstantCommand(() -> intake.startIntake()),
+                new InstantCommand(() -> {
+                    intake.startIntake();
+                    intake.setFullPower(true); // Use 0.65 power for Near auto
+                }),
 
                 // =========================================================
                 // 1. Path 1: Start -> Shoot Pose (Preload)

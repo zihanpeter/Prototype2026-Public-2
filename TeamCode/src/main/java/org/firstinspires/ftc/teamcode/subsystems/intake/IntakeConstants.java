@@ -11,9 +11,10 @@ public class IntakeConstants {
     public static String intakeMotorName = "intakeMotor";
 
     // Power levels
-    public static double intakePower = 0.5; // Standard running power
-    public static double fullPower = 0.65;    // Maximum power for fast intake
-    public static double transitPower = 1;   // Power when transferring/shooting
+    public static double intakePower = 0.5;       // Standard running power
+    public static double fullPower = 0.65;        // Maximum power for fast intake
+    public static double fastShootingPower = 0.8; // Power during FAST shooting in auto
+    public static double transitPower = 1;        // Power when transferring/shooting
 
     /**
      * Motor Specifications:

@@ -48,7 +48,10 @@ public class BlueFar extends AutoCommandBase {
         Command pushAndShootLoop = new RepeatCommand(
                 new SequentialCommandGroup(
                         // Path 2: Shoot Pose -> Sample 1
-                        new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                        new InstantCommand(() -> {
+                            shooter.setShooterState(Shooter.ShooterState.STOP);
+                            intake.setFastShooting(false);
+                        }),
                         new AutoDriveCommand(follower, path2_toSample1),
 
                         // Path 3: Sample 1 -> Push Zone
@@ -58,7 +61,10 @@ public class BlueFar extends AutoCommandBase {
                         new AutoDriveCommand(follower, path4_toSample2),
 
                         // Path 5: Sample 2 -> Shoot Pose
-                        new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.FAST)),
+                        new InstantCommand(() -> {
+                            shooter.setShooterState(Shooter.ShooterState.FAST);
+                            intake.setFastShooting(true);
+                        }),
                         new AutoDriveCommand(follower, path5_toShootPose),
                         new TransitCommand(transit, shooter) // Shoots 3 times then finishes
                 )
@@ -73,7 +79,10 @@ public class BlueFar extends AutoCommandBase {
                 // =========================================================
                 // 1. Path 1: Start -> Shoot Pose (Preload)
                 // =========================================================
-                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.FAST)),
+                new InstantCommand(() -> {
+                    shooter.setShooterState(Shooter.ShooterState.FAST);
+                    intake.setFastShooting(true);
+                }),
                 new AutoDriveCommand(follower, path1_toShootPose),
                 new TransitCommand(transit, shooter), // Shoots 3 times then finishes
 
