@@ -12,6 +12,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 import org.firstinspires.ftc.teamcode.utils.Util;
 
 /**
@@ -250,6 +252,57 @@ public class MecanumDrivePinpoint extends SubsystemBase {
      */
     private void applyBreak() {
         moveRobot(0, 0, 0);
+    }
+
+    /**
+     * Calculates the angle from the robot's current position to the target position.
+     * 
+     * @param targetX Target X coordinate in inches.
+     * @param targetY Target Y coordinate in inches.
+     * @return Angle in radians from current position to target (range: -π to π).
+     */
+    public double getAngleToTarget(double targetX, double targetY) {
+        Pose2D currentPose = getPose();
+        double currentX = currentPose.getX(DistanceUnit.INCH);
+        double currentY = currentPose.getY(DistanceUnit.INCH);
+        
+        double deltaX = targetX - currentX;
+        double deltaY = targetY - currentY;
+        
+        // atan2 returns angle in radians from -π to π
+        // This angle points FROM current position TO target
+        return Math.atan2(deltaY, deltaX);
+    }
+    
+    /**
+     * Calibrates the Pinpoint odometry using vision data from AprilTag detection.
+     * Updates X, Y, and heading based on Limelight's field-space position.
+     * 
+     * @param vision The Vision subsystem to get robot pose from.
+     * @param alliance The alliance color (used to set yawOffset for field-centric driving).
+     * @return True if calibration was successful (valid vision data), false otherwise.
+     */
+    public boolean visionCalibrate(Vision vision, Vision.Alliance alliance) {
+        Pose3D visionPose = vision.getRobotPose();
+        
+        if (visionPose == null) {
+            return false;  // No valid vision data
+        }
+        
+        // Convert Limelight Pose3D to Pinpoint Pose2D
+        Pose2D calibratedPose = Util.visionPoseToPinpointPose(visionPose);
+        
+        // Update Pinpoint position
+        pinpoint.setPosition(calibratedPose);
+        
+        // Update heading
+        pinpoint.setHeading(calibratedPose.getHeading(DriveConstants.angleUnit), DriveConstants.angleUnit);
+        
+        // Set yaw offset based on alliance for field-centric driving
+        // Blue alliance faces 180° (π), Red alliance faces 0°
+        yawOffset = (alliance == Vision.Alliance.BLUE) ? Math.PI : 0;
+        
+        return true;  // Calibration successful
     }
 
     @Override

@@ -6,14 +6,18 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
 
+import java.util.function.BooleanSupplier;
+
 /**
- * Command for TeleOp driving.
+ * Command for TeleOp driving with auto-aim support.
  * Handles gamepad input and sends movement commands to the drive subsystem.
+ * When auto-aim is enabled (via isAlign supplier), the turn input is replaced by auto-aim calculation.
  */
 public class TeleOpDriveCommand extends CommandBase {
     private final MecanumDrivePinpoint drive;
     private final GamepadEx gamepadEx;
     private final boolean[] isAuto;
+    private final BooleanSupplier isAlign;
 
     /**
      * Constructor for TeleOpDriveCommand.
@@ -21,19 +25,20 @@ public class TeleOpDriveCommand extends CommandBase {
      * @param drive The drive subsystem.
      * @param gamepadEx The gamepad input wrapper.
      * @param isAuto Flag array to indicate if autonomous mode is active (stops manual control).
+     * @param isAlign Supplier that returns true when auto-aim should be active (e.g., when A button is pressed).
      */
-    public TeleOpDriveCommand(MecanumDrivePinpoint drive, GamepadEx gamepadEx, boolean[] isAuto) {
+    public TeleOpDriveCommand(MecanumDrivePinpoint drive, GamepadEx gamepadEx, boolean[] isAuto, BooleanSupplier isAlign) {
         this.drive = drive;
         this.gamepadEx = gamepadEx;
         this.isAuto = isAuto;
+        this.isAlign = isAlign;
         addRequirements(drive);
     }
 
     /**
-     * Executes the drive logic.
-     * Reads gamepad inputs, applies deadband and squared input curve, and sends field-centric drive commands.
-     * Active braking is enabled via setGamepad() when inputs are below deadband.
-     * D-Pad Left/Right can also be used for rotation.
+     * Executes the drive logic with optional auto-aim.
+     * When auto-aim is active, the turn input is replaced by auto-aim calculation.
+     * Otherwise, behaves like manual drive.
      */
     @Override
     public void execute() {
@@ -43,31 +48,40 @@ public class TeleOpDriveCommand extends CommandBase {
             double rawLeftY = gamepadEx.getLeftY();
             double rawRightX = gamepadEx.getRightX();
             
-            // D-Pad rotation input
+            // D-Pad rotation input (only used when not in align mode)
             double dpadTurn = 0;
-            if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_LEFT)) {
-                dpadTurn = -DriveConstants.dpadTurnSpeed; // Turn left (negative)
-            } else if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_RIGHT)) {
-                dpadTurn = DriveConstants.dpadTurnSpeed;  // Turn right (positive)
+            if (!isAlign.getAsBoolean()) {
+                if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_LEFT)) {
+                    dpadTurn = -DriveConstants.dpadTurnSpeed; // Turn left (negative)
+                } else if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_RIGHT)) {
+                    dpadTurn = DriveConstants.dpadTurnSpeed;  // Turn right (positive)
+                }
             }
             
-            // check for input outside deadband OR D-Pad is pressed
+            // Check for input outside deadband OR D-Pad is pressed (when not aligning)
             boolean hasInput = Math.abs(rawLeftX) > DriveConstants.deadband || 
                                Math.abs(rawLeftY) > DriveConstants.deadband || 
                                Math.abs(rawRightX) > DriveConstants.deadband ||
-                               dpadTurn != 0;
+                               (dpadTurn != 0 && !isAlign.getAsBoolean()) ||
+                               isAlign.getAsBoolean(); // Auto-aim mode counts as input
             
             if (hasInput) {
-                drive.setGamepad(true); // Signal that gamepad is active (disables automatic braking if implemented)
+                drive.setGamepad(true); // Signal that gamepad is active
                 
                 // Apply squared input curve while preserving sign
-                // Formula: squared = value * |value| (preserves sign, squares magnitude)
                 double forward = rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
                 double strafe = -rawLeftX * Math.abs(rawLeftX);
-                double turn = rawRightX * Math.abs(rawRightX);   // Inverted based on user request
                 
-                // Add D-Pad turn input
-                turn += dpadTurn;
+                // Determine turn input: use auto-aim if enabled, otherwise use manual input
+                double turn;
+                if (isAlign.getAsBoolean()) {
+                    // TODO: Replace with actual auto-aim calculation
+                    // turn = drive.getAlignTurnPower();
+                    turn = 0; // Placeholder until auto-aim is implemented
+                } else {
+                    turn = rawRightX * Math.abs(rawRightX);
+                    turn += dpadTurn;
+                }
                 
                 // Drive Field Relative
                 drive.moveRobotFieldRelative(forward, strafe, turn);

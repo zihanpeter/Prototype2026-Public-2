@@ -6,6 +6,7 @@ import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 
 /**
  * Robot Hardware Container.
@@ -17,6 +18,7 @@ public class Robot {
     public final Shooter shooter;
     public final Transit transit;
     public final Intake intake;
+    public final Vision vision;
 
     /**
      * Constructor for Robot.
@@ -29,6 +31,7 @@ public class Robot {
         shooter = new Shooter(hardwareMap);
         transit = new Transit(hardwareMap);
         intake = new Intake(hardwareMap);
+        vision = new Vision(hardwareMap);
     }
 }
 
