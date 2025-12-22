@@ -60,8 +60,8 @@ public class ShooterConstants {
     public static double shooterServoDownPos = 0.85; // Position for SLOW/Short range or Stowed
 
     // Brake Servo Positions
-    public static double brakeServoEngagedPos = 0.81;  // Brake engaged (stopping flywheel)
-    public static double brakeServoReleasedPos = 0.77; // Brake released (flywheel free to spin)
+    public static double brakeServoEngagedPos = 0.85;  // Brake engaged (stopping flywheel)
+    public static double brakeServoReleasedPos = 0.81; // Brake released (flywheel free to spin)
 
     // Auto Brake Threshold
     // 100 RPM = 100/60 * 28 ticks = ~47 TPS
