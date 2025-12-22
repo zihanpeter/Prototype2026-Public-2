@@ -81,6 +81,10 @@ public class TeleOpRed extends CommandOpMode {
         telemetry.addData("LL Pipeline", robot.vision.getPipelineIndex());
         telemetry.addData("LL Result Valid", robot.vision.isResultValid());
         telemetry.addData("LL Tags Detected", robot.vision.getNumTagsDetected());
+        telemetry.addData("LL Raw Tag ID", robot.vision.getRawTagId());
+        telemetry.addData("LL Tag Area", robot.vision.getTagArea());
+        telemetry.addData("LL tx", robot.vision.getTx());
+        telemetry.addData("LL ty", robot.vision.getTy());
         
         // --- Shooter Telemetry ---
         telemetry.addData("Shooter Velocity", robot.shooter.getVelocity());

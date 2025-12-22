@@ -277,12 +277,20 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     /**
      * Calibrates the Pinpoint odometry using vision data from AprilTag detection.
      * Updates X, Y, and heading based on Limelight's field-space position.
+     * Only calibrates when detecting RED goal (ID 24) or BLUE goal (ID 20) tags.
+     * Ignores other tags like obelisk (ID 21, 22, 23).
      * 
      * @param vision The Vision subsystem to get robot pose from.
      * @param alliance The alliance color (used to set yawOffset for field-centric driving).
-     * @return True if calibration was successful (valid vision data), false otherwise.
+     * @return True if calibration was successful (valid goal tag detected), false otherwise.
      */
     public boolean visionCalibrate(Vision vision, Vision.Alliance alliance) {
+        // Only calibrate if we see a goal tag (red or blue), not obelisk tags
+        int detectedTagId = vision.getDetectedTagId();
+        if (detectedTagId != Vision.BLUE_GOAL_TAG_ID && detectedTagId != Vision.RED_GOAL_TAG_ID) {
+            return false;  // Not a goal tag, don't calibrate
+        }
+        
         Pose3D visionPose = vision.getRobotPose();
         
         if (visionPose == null) {

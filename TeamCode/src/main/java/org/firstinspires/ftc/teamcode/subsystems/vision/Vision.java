@@ -51,6 +51,7 @@ public class Vision extends SubsystemBase {
     public Vision(final HardwareMap hardwareMap) {
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(50);  // Set polling rate to 50Hz
+        limelight.pipelineSwitch(0);  // Switch to AprilTag pipeline (pipeline 0)
         limelight.start();            // Start polling for data
     }
     
@@ -226,6 +227,62 @@ public class Vision extends SubsystemBase {
      */
     public void setPipeline(int pipelineIndex) {
         limelight.pipelineSwitch(pipelineIndex);
+    }
+    
+    /**
+     * Gets the raw tag ID without area filtering (for debugging).
+     * @return Tag ID or -1 if no tag.
+     */
+    public int getRawTagId() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) {
+            return -1;
+        }
+        List<FiducialResult> fiducialResults = result.getFiducialResults();
+        if (fiducialResults.isEmpty()) {
+            return -1;
+        }
+        return fiducialResults.get(0).getFiducialId();
+    }
+    
+    /**
+     * Gets the target area of the first detected tag (for debugging).
+     * @return Target area or -1 if no tag.
+     */
+    public double getTagArea() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) {
+            return -1;
+        }
+        List<FiducialResult> fiducialResults = result.getFiducialResults();
+        if (fiducialResults.isEmpty()) {
+            return -1;
+        }
+        return fiducialResults.get(0).getTargetArea();
+    }
+    
+    /**
+     * Gets tx (horizontal offset) for debugging.
+     * @return tx value or 0 if no result.
+     */
+    public double getTx() {
+        LLResult result = limelight.getLatestResult();
+        if (result != null && result.isValid()) {
+            return result.getTx();
+        }
+        return 0;
+    }
+    
+    /**
+     * Gets ty (vertical offset) for debugging.
+     * @return ty value or 0 if no result.
+     */
+    public double getTy() {
+        LLResult result = limelight.getLatestResult();
+        if (result != null && result.isValid()) {
+            return result.getTy();
+        }
+        return 0;
     }
 }
 
