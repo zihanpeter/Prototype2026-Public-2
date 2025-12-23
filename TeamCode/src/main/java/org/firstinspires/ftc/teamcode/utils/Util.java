@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode.utils;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -7,7 +8,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
+@Config
 public class Util {
+    // Adjustable offsets for vision calibration (tune these in FTC Dashboard)
+    public static double visionXOffset = 72;  // X offset in inches
+    public static double visionYOffset = 72;  // Y offset in inches
+    public static double visionHeadingOffset = -Math.PI / 2;  // Heading offset in radians
+    public static boolean swapXY = true;  // Whether to swap X and Y from Limelight
+    public static boolean negateX = false;  // Whether to negate X
+    public static boolean negateY = true;   // Whether to negate Y (original: true)
+    
     public static Pose Pose2DToPose(Pose2D pose2D) {
         return new Pose(pose2D.getX(DistanceUnit.INCH),
                 pose2D.getY(DistanceUnit.INCH),
@@ -20,21 +30,68 @@ public class Util {
     
     /**
      * Converts Limelight Pose3D (meters, field-space) to Pinpoint Pose2D (inches).
-     * Limelight uses a different coordinate system, so we need to transform:
-     * - Limelight Y -> Pinpoint X (+ 72 to shift origin to field center)
-     * - Limelight X -> Pinpoint Y (negated, + 72 to shift origin)
-     * - Limelight Yaw (degrees) -> Pinpoint Heading (radians, - PI/2 for rotation offset)
+     * Uses configurable offsets and axis swapping for easy tuning.
      *
      * @param pose3D The Pose3D from Limelight (in meters and degrees)
      * @return Pose2D for Pinpoint (in inches and radians)
      */
     public static Pose2D visionPoseToPinpointPose(Pose3D pose3D) {
+        double llX = Units.metersToInches(pose3D.getPosition().x);
+        double llY = Units.metersToInches(pose3D.getPosition().y);
+        
+        // Apply axis swapping
+        double rawX, rawY;
+        if (swapXY) {
+            rawX = llY;
+            rawY = llX;
+        } else {
+            rawX = llX;
+            rawY = llY;
+        }
+        
+        // Apply negation
+        if (negateX) rawX = -rawX;
+        if (negateY) rawY = -rawY;
+        
+        // Apply offsets
+        double finalX = rawX + visionXOffset;
+        double finalY = rawY + visionYOffset;
+        
+        // Heading conversion (getYaw returns degrees, convert to radians)
+        double heading = pose3D.getOrientation().getYaw() / 180.0 * Math.PI + visionHeadingOffset;
+        
         return new Pose2D(
                 DistanceUnit.INCH,
-                Units.metersToInches(pose3D.getPosition().y) + 72,   // Limelight Y -> X
-                -Units.metersToInches(pose3D.getPosition().x) + 72,  // Limelight X -> Y (negated)
+                finalX,
+                finalY,
                 AngleUnit.RADIANS,
-                pose3D.getOrientation().getYaw() / 180.0 * Math.PI - Math.PI / 2  // Degrees -> Radians with offset
+                heading
         );
+    }
+    
+    /**
+     * Returns a debug string showing the conversion steps.
+     */
+    public static String debugVisionConversion(Pose3D pose3D) {
+        double llX = Units.metersToInches(pose3D.getPosition().x);
+        double llY = Units.metersToInches(pose3D.getPosition().y);
+        
+        double rawX, rawY;
+        if (swapXY) {
+            rawX = llY;
+            rawY = llX;
+        } else {
+            rawX = llX;
+            rawY = llY;
+        }
+        
+        if (negateX) rawX = -rawX;
+        if (negateY) rawY = -rawY;
+        
+        double finalX = rawX + visionXOffset;
+        double finalY = rawY + visionYOffset;
+        
+        return String.format("LL(%.1f,%.1f) -> swap(%s) -> negate(X:%s,Y:%s) -> +offset(%.0f,%.0f) -> (%.1f,%.1f)",
+                llX, llY, swapXY, negateX, negateY, visionXOffset, visionYOffset, finalX, finalY);
     }
 }

@@ -2,44 +2,45 @@ package org.firstinspires.ftc.teamcode.commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 
 import org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants;
 import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
-
-import java.util.function.BooleanSupplier;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 
 /**
  * Command for TeleOp driving with auto-aim support.
- * Handles gamepad input and sends movement commands to the drive subsystem.
- * When auto-aim is enabled (via isAlign supplier), the turn input is replaced by auto-aim calculation.
+ * 
+ * A (hold) or any shoot button (LB/RB/RT/LT): Auto-align to goal tag (20/24)
  */
 public class TeleOpDriveCommand extends CommandBase {
     private final MecanumDrivePinpoint drive;
+    private final Vision vision;
     private final GamepadEx gamepadEx;
     private final boolean[] isAuto;
-    private final BooleanSupplier isAlign;
+    
+    // Trigger threshold for shoot buttons
+    private static final double TRIGGER_THRESHOLD = 0.3;
 
-    /**
-     * Constructor for TeleOpDriveCommand.
-     *
-     * @param drive The drive subsystem.
-     * @param gamepadEx The gamepad input wrapper.
-     * @param isAuto Flag array to indicate if autonomous mode is active (stops manual control).
-     * @param isAlign Supplier that returns true when auto-aim should be active (e.g., when A button is pressed).
-     */
-    public TeleOpDriveCommand(MecanumDrivePinpoint drive, GamepadEx gamepadEx, boolean[] isAuto, BooleanSupplier isAlign) {
+    public TeleOpDriveCommand(MecanumDrivePinpoint drive, Vision vision, GamepadEx gamepadEx, 
+                              boolean[] isAuto, java.util.function.BooleanSupplier unused) {
         this.drive = drive;
+        this.vision = vision;
         this.gamepadEx = gamepadEx;
         this.isAuto = isAuto;
-        this.isAlign = isAlign;
         addRequirements(drive);
     }
-
+    
     /**
-     * Executes the drive logic with optional auto-aim.
-     * When auto-aim is active, the turn input is replaced by auto-aim calculation.
-     * Otherwise, behaves like manual drive.
+     * Checks if any shoot button (with auto-aim) is pressed.
+     * LB = Slow, RB = Mid, RT = Fast (LT excluded - no auto-aim for transit)
      */
+    private boolean isShootButtonPressed() {
+        return gamepadEx.getButton(GamepadKeys.Button.LEFT_BUMPER) ||
+               gamepadEx.getButton(GamepadKeys.Button.RIGHT_BUMPER) ||
+               gamepadEx.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= TRIGGER_THRESHOLD;
+    }
+
     @Override
     public void execute() {
         if (!isAuto[0]) {
@@ -48,46 +49,52 @@ public class TeleOpDriveCommand extends CommandBase {
             double rawLeftY = gamepadEx.getLeftY();
             double rawRightX = gamepadEx.getRightX();
             
-            // D-Pad rotation input (only used when not in align mode)
+            // Check button states
+            boolean aPressed = gamepadEx.getButton(GamepadKeys.Button.A);
+            boolean shootPressed = isShootButtonPressed();
+            
+            // Auto-aim triggers: A button OR any shoot button
+            boolean shouldAlign = aPressed || shootPressed;
+            
+            // D-Pad rotation input (always available)
             double dpadTurn = 0;
-            if (!isAlign.getAsBoolean()) {
-                if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_LEFT)) {
-                    dpadTurn = -DriveConstants.dpadTurnSpeed; // Turn left (negative)
-                } else if (gamepadEx.getButton(com.arcrobotics.ftclib.gamepad.GamepadKeys.Button.DPAD_RIGHT)) {
-                    dpadTurn = DriveConstants.dpadTurnSpeed;  // Turn right (positive)
-                }
+            if (gamepadEx.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+                dpadTurn = -DriveConstants.dpadTurnSpeed;
+            } else if (gamepadEx.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+                dpadTurn = DriveConstants.dpadTurnSpeed;
             }
             
-            // Check for input outside deadband OR D-Pad is pressed (when not aligning)
+            // Check for input
             boolean hasInput = Math.abs(rawLeftX) > DriveConstants.deadband || 
                                Math.abs(rawLeftY) > DriveConstants.deadband || 
                                Math.abs(rawRightX) > DriveConstants.deadband ||
-                               (dpadTurn != 0 && !isAlign.getAsBoolean()) ||
-                               isAlign.getAsBoolean(); // Auto-aim mode counts as input
+                               dpadTurn != 0 ||
+                               shouldAlign;
             
             if (hasInput) {
-                drive.setGamepad(true); // Signal that gamepad is active
+                drive.setGamepad(true);
                 
-                // Apply squared input curve while preserving sign
-                double forward = rawLeftY * Math.abs(rawLeftY);  // Inverted because gamepad Y is negative up
+                // Apply squared input curve
+                double forward = rawLeftY * Math.abs(rawLeftY);
                 double strafe = -rawLeftX * Math.abs(rawLeftX);
                 
-                // Determine turn input: use auto-aim if enabled, otherwise use manual input
-                double turn;
-                if (isAlign.getAsBoolean()) {
-                    // TODO: Replace with actual auto-aim calculation
-                    // turn = drive.getAlignTurnPower();
-                    turn = 0; // Placeholder until auto-aim is implemented
-                } else {
-                    turn = rawRightX * Math.abs(rawRightX);
-                    turn += dpadTurn;
+                // Determine turn input
+                double turn = rawRightX * Math.abs(rawRightX);  // Manual always works
+                turn += dpadTurn;
+                
+                if (shouldAlign) {
+                    // A or Shoot buttons: Add auto-aim to manual turn
+                    turn += drive.getAlignTurnPower(vision);
                 }
+                
+                // Clamp turn to [-1, 1]
+                turn = Math.max(-1, Math.min(1, turn));
                 
                 // Drive Field Relative
                 drive.moveRobotFieldRelative(forward, strafe, turn);
             }
             else {
-                drive.setGamepad(false); // Signal that gamepad is inactive (enables braking)
+                drive.setGamepad(false);
             }
         }
     }

@@ -26,7 +26,7 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     public final DcMotor leftFrontMotor, leftBackMotor, rightFrontMotor, rightBackMotor;
     private final GoBildaPinpointDriver pinpoint;
     
-    // Offset for heading to allow resetting heading without resetting full odometry
+    // Offset for heading to allow resetting heading without resetting full odometry (for field-centric drive)
     private double yawOffset;
 
     // Flag to indicate if gamepad control is active (used for braking logic)
@@ -34,6 +34,13 @@ public class MecanumDrivePinpoint extends SubsystemBase {
 
     // Last recorded pose
     Pose2D lastPose;
+    
+    // Flag to track if vision calibration has been performed
+    private boolean hasVisionCalibrated = false;
+    
+    // Auto-aim: Last aligned tag info
+    private int lastAlignedTagId = -1;           // Which tag we last aligned to
+    private boolean hasLastAlignedTag = false;   // Whether we have a record
 
     /**
      * Constructor for MecanumDrivePinpoint.
@@ -113,6 +120,13 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         // However, standard "reset" usually means "set current heading to 0".
         // If parameter 'heading' is the desired new heading:
         yawOffset = pinpoint.getHeading(DriveConstants.angleUnit) - heading;
+    }
+    
+    /**
+     * Resets the robot's heading to 0 (convenience method).
+     */
+    public void resetHeading() {
+        reset(0);
     }
 
     /**
@@ -275,13 +289,12 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     }
     
     /**
-     * Calibrates the Pinpoint odometry using vision data from AprilTag detection.
-     * Updates X, Y, and heading based on Limelight's field-space position.
+     * Calibrates the odometry position using vision data from AprilTag detection.
+     * DIRECTLY RESETS the Pinpoint odometry position (like Prototype2026-Public).
      * Only calibrates when detecting RED goal (ID 24) or BLUE goal (ID 20) tags.
-     * Ignores other tags like obelisk (ID 21, 22, 23).
      * 
      * @param vision The Vision subsystem to get robot pose from.
-     * @param alliance The alliance color (used to set yawOffset for field-centric driving).
+     * @param alliance The alliance color for yaw offset.
      * @return True if calibration was successful (valid goal tag detected), false otherwise.
      */
     public boolean visionCalibrate(Vision vision, Vision.Alliance alliance) {
@@ -297,20 +310,120 @@ public class MecanumDrivePinpoint extends SubsystemBase {
             return false;  // No valid vision data
         }
         
-        // Convert Limelight Pose3D to Pinpoint Pose2D
+        // Convert Limelight Pose3D to field coordinates
         Pose2D calibratedPose = Util.visionPoseToPinpointPose(visionPose);
         
-        // Update Pinpoint position
+        // DIRECTLY SET the Pinpoint position (like Prototype2026-Public)
         pinpoint.setPosition(calibratedPose);
         
-        // Update heading
-        pinpoint.setHeading(calibratedPose.getHeading(DriveConstants.angleUnit), DriveConstants.angleUnit);
-        
-        // Set yaw offset based on alliance for field-centric driving
-        // Blue alliance faces 180° (π), Red alliance faces 0°
+        // Set yaw offset based on alliance (for field-centric driving)
         yawOffset = (alliance == Vision.Alliance.BLUE) ? Math.PI : 0;
         
+        hasVisionCalibrated = true;
+        
         return true;  // Calibration successful
+    }
+    
+    /**
+     * Gets the current pose (same as getPose, for compatibility).
+     * After vision calibration, this returns the calibrated position.
+     */
+    public Pose2D getAbsolutePose() {
+        return getPose();
+    }
+    
+    /**
+     * Checks if vision calibration has been performed.
+     * @return True if vision has calibrated at least once.
+     */
+    public boolean hasVisionCalibrated() {
+        return hasVisionCalibrated;
+    }
+    
+    /**
+     * Gets the turn power for auto-aim using Limelight's tx value.
+     * Simple and direct - no coordinate conversion needed!
+     * 
+     * @param vision The Vision subsystem.
+     * @return Turn power (-1 to 1). Positive = turn right, Negative = turn left.
+     */
+    /**
+     * A button: Align to goal tag currently in view.
+     * Only works if seeing tag 20 or 24.
+     * Records which tag we aligned to.
+     * 
+     * @return Turn power (-1 to 1)
+     */
+    public double getAlignTurnPower(Vision vision) {
+        int tagId = vision.getDetectedTagId();
+        boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
+        
+        if (!isGoalTag) {
+            return 0;  // No goal tag in view, do nothing
+        }
+        
+        // Record which tag we're aligning to
+        lastAlignedTagId = tagId;
+        hasLastAlignedTag = true;
+        
+        // Use tx to align
+        double tx = vision.getTx();
+        double kP = 0.025;
+        double turn = tx * kP;
+        return Math.max(-1, Math.min(1, turn));
+    }
+    
+    /**
+     * B button: Spin to search for the last aligned tag.
+     * Keeps spinning until that specific tag appears in view.
+     * 
+     * @param vision The vision subsystem
+     * @param spinSpeed Speed to spin (positive = right)
+     * @return Turn power, or 0 if found the tag or never aligned before
+     */
+    public double getSearchTurnPower(Vision vision, double spinSpeed) {
+        if (!hasLastAlignedTag) {
+            return 0;  // Never aligned before, do nothing
+        }
+        
+        int currentTagId = vision.getDetectedTagId();
+        
+        if (currentTagId == lastAlignedTagId) {
+            return 0;  // Found the tag! Stop spinning
+        }
+        
+        // Keep spinning to search
+        return spinSpeed;
+    }
+    
+    /**
+     * Checks if we found the last aligned tag.
+     */
+    public boolean foundLastAlignedTag(Vision vision) {
+        if (!hasLastAlignedTag) return false;
+        return vision.getDetectedTagId() == lastAlignedTagId;
+    }
+    
+    /**
+     * Gets the last aligned tag ID.
+     */
+    public int getLastAlignedTagId() {
+        return hasLastAlignedTag ? lastAlignedTagId : -1;
+    }
+    
+    /**
+     * Checks if we have a recorded aligned tag.
+     */
+    public boolean hasLastAlignedTag() {
+        return hasLastAlignedTag;
+    }
+    
+    /**
+     * Clears the last aligned tag record.
+     */
+    public void clearLastAlignedTag() {
+        hasLastAlignedTag = false;
+        lastAlignedTagId = -1;
     }
 
     @Override

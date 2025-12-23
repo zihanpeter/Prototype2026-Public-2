@@ -40,7 +40,8 @@ public class Vision extends SubsystemBase {
     public static final int RED_GOAL_TAG_ID = 24;
     
     // Minimum target area threshold to filter noise
-    private static final double MIN_TARGET_AREA = 0.01;
+    // Lowered to 0.001 to avoid filtering out distant tags
+    private static final double MIN_TARGET_AREA = 0.0000;
     
     /**
      * Constructor for Vision subsystem.
@@ -283,6 +284,55 @@ public class Vision extends SubsystemBase {
             return result.getTy();
         }
         return 0;
+    }
+    
+    /**
+     * Gets the raw robot pose WITHOUT any filtering (for debugging).
+     * @return Pose3D or null if no fiducial results.
+     */
+    public Pose3D getRawRobotPose() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null) {
+            return null;
+        }
+        // Don't check isValid() - try to get data anyway
+        List<FiducialResult> fiducialResults = result.getFiducialResults();
+        if (fiducialResults == null || fiducialResults.isEmpty()) {
+            return null;
+        }
+        // No area filtering - return raw pose
+        return fiducialResults.get(0).getRobotPoseFieldSpace();
+    }
+    
+    /**
+     * Debug method to check why getRobotPose returns null.
+     * @return Debug string explaining the state.
+     */
+    public String getDebugState() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null) {
+            return "result=NULL";
+        }
+        if (!result.isValid()) {
+            return "result.isValid=FALSE";
+        }
+        List<FiducialResult> fiducialResults = result.getFiducialResults();
+        if (fiducialResults == null) {
+            return "fiducialResults=NULL";
+        }
+        if (fiducialResults.isEmpty()) {
+            return "fiducialResults=EMPTY";
+        }
+        FiducialResult first = fiducialResults.get(0);
+        double area = first.getTargetArea();
+        if (area < MIN_TARGET_AREA) {
+            return "area=" + area + " < " + MIN_TARGET_AREA;
+        }
+        Pose3D pose = first.getRobotPoseFieldSpace();
+        if (pose == null) {
+            return "getRobotPoseFieldSpace=NULL";
+        }
+        return "OK: pose available";
     }
 }
 

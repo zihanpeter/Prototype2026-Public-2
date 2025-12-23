@@ -9,9 +9,11 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.subsystems.drive.Constants;
+import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 
 /**
  * Base class for Autonomous OpModes.
@@ -22,6 +24,8 @@ public abstract class AutoCommandBase extends LinearOpMode {
     protected Transit transit;
     protected Intake intake;
     protected Follower follower;
+    protected MecanumDrivePinpoint drive;
+    protected Vision vision;
 
     /**
      * Abstract method to define the autonomous command sequence.
@@ -50,6 +54,8 @@ public abstract class AutoCommandBase extends LinearOpMode {
         shooter = new Shooter(hardwareMap);
         transit = new Transit(hardwareMap);
         intake = new Intake(hardwareMap);
+        drive = new MecanumDrivePinpoint(hardwareMap);
+        vision = new Vision(hardwareMap);
     }
 
     @Override

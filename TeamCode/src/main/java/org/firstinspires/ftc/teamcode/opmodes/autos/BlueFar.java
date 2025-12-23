@@ -10,6 +10,7 @@ import com.arcrobotics.ftclib.command.RepeatCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
+import org.firstinspires.ftc.teamcode.commands.autocommands.AutoAlignCommand;
 import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
@@ -66,6 +67,7 @@ public class BlueFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path5_toShootPose),
+                        new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
                         new TransitCommand(transit, shooter) // Shoots 3 times then finishes
                 )
         );
@@ -84,6 +86,7 @@ public class BlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
+                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter), // Shoots 3 times then finishes
 
                 // =========================================================
