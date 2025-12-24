@@ -100,6 +100,9 @@ public class TeleOp extends CommandOpMode {
         telemetry.addData("A / Shoot", "Auto-aim to goal tag");
         telemetry.addData("Shoot+Aim", "LB/RB/RT");
         telemetry.addData("LT", "Transit (no aim)");
+
+        telemetry.addData("READY TO SHOOT", robot.shooter.isShooterAtSetPoint());
+        telemetry.addData("SHOOTER STATE", robot.shooter.shooterState);
         
         telemetry.update();
 

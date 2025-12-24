@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -24,7 +25,7 @@ public class Shooter extends SubsystemBase {
     public final TelemetryPacket packet = new TelemetryPacket();
     
     // Flag indicating if the shooter is up to speed
-    public static boolean readyToShoot = false;
+//    public static boolean readyToShoot = false;
     
     // Flag indicating if the brake is engaged
     public static boolean brakeEngaged = false;
@@ -106,7 +107,13 @@ public class Shooter extends SubsystemBase {
     public boolean isShooterAtSetPoint() {
         // Since velocity is negative, we check if current velocity is less than or equal to target velocity 
         // (meaning magnitude is greater than or equal to target magnitude)
-        return rightShooter.getVelocity() <= shooterState.shooterVelocity;
+//        return rightShooter.getVelocity() <= shooterState.shooterVelocity;
+        return Util.epsilonEqual(
+                rightShooter.getVelocity(),
+                shooterState.shooterVelocity,
+                ShooterConstants.shooterEpsilon
+        ) &&
+                shooterState != ShooterState.STOP;
     }
 
     /**
@@ -160,6 +167,14 @@ public class Shooter extends SubsystemBase {
         releaseBrake();
     }
 
+//    public void setReadyToShoot(boolean ready) {
+//        readyToShoot = ready;
+//    }
+//
+//    public boolean getReadyToShoot() {
+//        return readyToShoot;
+//    }
+
     /**
      * Periodic update method.
      * Implements Bang-Bang control with Feedforward for velocity regulation.
@@ -178,20 +193,20 @@ public class Shooter extends SubsystemBase {
         // currentVel < targetVel - threshold means spinning too fast
         // Skip auto logic if manual override is active
         // =================================================================
-        if (!manualBrakeOverride) {
-            double threshold = ShooterConstants.brakeTriggerThresholdTPS;
-            if (currentVel < targetVel - threshold) {
-                // Spinning too fast, engage brake
-                if (!brakeEngaged) {
-                    engageBrake();
-                }
-            } else {
-                // Speed is acceptable, release brake
-                if (brakeEngaged) {
-                    releaseBrake();
-                }
-            }
-        }
+//        if (!manualBrakeOverride) {
+//            double threshold = ShooterConstants.brakeTriggerThresholdTPS;
+//            if (currentVel < targetVel - threshold) {
+//                // Spinning too fast, engage brake
+//                if (!brakeEngaged) {
+//                    engageBrake();
+//                }
+//            } else {
+//                // Speed is acceptable, release brake
+//                if (brakeEngaged) {
+//                    releaseBrake();
+//                }
+//            }
+//        }
         // If manualBrakeOverride is true, brake state is controlled manually
 
         // Bang-Bang Control with Simple Feedforward Logic
@@ -207,7 +222,7 @@ public class Shooter extends SubsystemBase {
             // Estimate based on GoBilda 5203-2402-0001 (6000RPM)
             // Max TPS = (6000 / 60) * 28 = 2800 TPS
             // Ratio = |target| / 2800.0
-            power = Math.abs(targetVel) / ShooterConstants.maxVelocityTPS; 
+            power = Math.abs(targetVel) / ShooterConstants.maxVelocityTPS;
         }
 
         // Apply power
@@ -219,15 +234,15 @@ public class Shooter extends SubsystemBase {
         shooterServo.setPosition(shooterState.shooterServoPos);
 
         // Update Ready Flag
-        if (isShooterAtSetPoint()) {
-            readyToShoot = true;
-        } else if (rightShooter.getVelocity() > releaseVelocity) {
-            // Reset ready flag if speed drops significantly (closer to 0 than releaseVelocity)
-            readyToShoot = false;
-        }
+//        readyToShoot = isShooterAtSetPoint();
+//        else if (rightShooter.getVelocity() > releaseVelocity) {
+//            // Reset ready flag if speed drops significantly (closer to 0 than releaseVelocity)
+//            readyToShoot = false;
+//        }
 
         // Telemetry handled centrally
         // packet.put("rightShooterVelocity", rightShooter.getVelocity());
         // FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
     }
 }
