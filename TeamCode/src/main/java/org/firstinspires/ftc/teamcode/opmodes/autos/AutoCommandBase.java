@@ -9,7 +9,6 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamcode.subsystems.drive.Constants;
-import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
 import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
@@ -18,13 +17,13 @@ import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 /**
  * Base class for Autonomous OpModes.
  * Handles initialization of subsystems, telemetry, and the command scheduler loop.
+ * NOTE: Do NOT initialize MecanumDrivePinpoint here - it would reset Pinpoint and conflict with Follower!
  */
 public abstract class AutoCommandBase extends LinearOpMode {
     protected Shooter shooter;
     protected Transit transit;
     protected Intake intake;
     protected Follower follower;
-    protected MecanumDrivePinpoint drive;
     protected Vision vision;
 
     /**
@@ -54,8 +53,8 @@ public abstract class AutoCommandBase extends LinearOpMode {
         shooter = new Shooter(hardwareMap);
         transit = new Transit(hardwareMap);
         intake = new Intake(hardwareMap);
-        drive = new MecanumDrivePinpoint(hardwareMap);
         vision = new Vision(hardwareMap);
+        // NOTE: MecanumDrivePinpoint is NOT initialized here to avoid resetting Pinpoint and conflicting with Follower
     }
 
     @Override

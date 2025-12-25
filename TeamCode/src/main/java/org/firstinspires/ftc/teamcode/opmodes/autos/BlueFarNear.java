@@ -66,7 +66,7 @@ public class BlueFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -85,7 +85,7 @@ public class BlueFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path4_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -99,7 +99,7 @@ public class BlueFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path6_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -113,7 +113,7 @@ public class BlueFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path8_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================

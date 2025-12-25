@@ -1,36 +1,35 @@
 package org.firstinspires.ftc.teamcode.commands.autocommands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
 
-import org.firstinspires.ftc.teamcode.subsystems.drive.MecanumDrivePinpoint;
 import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 
 /**
  * Command for auto-aligning to a goal AprilTag (20 or 24) in autonomous.
- * Uses Limelight's tx to turn towards the tag.
+ * Uses Limelight's tx to calculate target heading, then uses Follower to turn.
  * Finishes when aligned (tx < threshold) or after timeout.
  */
 public class AutoAlignCommand extends CommandBase {
-    private final MecanumDrivePinpoint drive;
+    private final Follower follower;
     private final Vision vision;
     
     // Alignment parameters
-    private static final double kP = 0.03;           // Proportional gain for tx alignment
-    private static final double TX_THRESHOLD = 2.0; // Degrees - considered aligned when tx < this
-    private static final double MIN_POWER = 0.1;    // Minimum turn power to overcome static friction
+    private static final double TX_THRESHOLD = 1.0; // Degrees - considered aligned when tx < this
     
     private int alignedFrameCount = 0;
     private static final int REQUIRED_ALIGNED_FRAMES = 3;  // Need 3 consecutive aligned frames
     
     /**
      * Creates an AutoAlignCommand.
-     * @param drive The MecanumDrivePinpoint subsystem.
+     * @param follower The PedroPathing Follower instance.
      * @param vision The Vision subsystem.
      */
-    public AutoAlignCommand(MecanumDrivePinpoint drive, Vision vision) {
-        this.drive = drive;
+    public AutoAlignCommand(Follower follower, Vision vision) {
+        this.follower = follower;
         this.vision = vision;
-        addRequirements(drive);
+        // No addRequirements - Follower is not a Subsystem
     }
     
     @Override
@@ -44,8 +43,10 @@ public class AutoAlignCommand extends CommandBase {
         boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
         
         if (!isGoalTag) {
-            // No goal tag in view, stop and wait
-            drive.moveRobot(0, 0, 0);
+            // No goal tag in view, hold current position
+            Pose currentPose = follower.getPose();
+            follower.holdPoint(currentPose);
+            follower.update();
             alignedFrameCount = 0;  // Reset counter
             return;
         }
@@ -55,24 +56,23 @@ public class AutoAlignCommand extends CommandBase {
         // Check if aligned
         if (Math.abs(tx) < TX_THRESHOLD) {
             alignedFrameCount++;
-            drive.moveRobot(0, 0, 0);  // Stop when aligned
+            // Hold current position when aligned
+            Pose currentPose = follower.getPose();
+            follower.holdPoint(currentPose);
         } else {
             alignedFrameCount = 0;  // Reset counter if not aligned
             
-            // Calculate turn power
-            double turn = tx * kP;
+            // Calculate target heading based on tx
+            // tx > 0 means target is to the right, so we need to turn right (decrease heading)
+            Pose currentPose = follower.getPose();
+            double targetHeading = currentPose.getHeading() - Math.toRadians(tx);
             
-            // Apply minimum power to overcome static friction
-            if (Math.abs(turn) < MIN_POWER && Math.abs(tx) > 0.5) {
-                turn = Math.signum(turn) * MIN_POWER;
-            }
-            
-            // Clamp turn power
-            turn = Math.max(-1, Math.min(1, turn));
-            
-            // Turn robot (no forward/strafe movement)
-            drive.moveRobot(0, 0, turn);
+            // Create target pose with same X/Y but new heading
+            Pose targetPose = new Pose(currentPose.getX(), currentPose.getY(), targetHeading);
+            follower.holdPoint(targetPose);
         }
+        
+        follower.update();
     }
     
     @Override
@@ -83,7 +83,7 @@ public class AutoAlignCommand extends CommandBase {
     
     @Override
     public void end(boolean interrupted) {
-        drive.moveRobot(0, 0, 0);  // Stop robot
+        // Follower will continue to hold last position
     }
 }
 

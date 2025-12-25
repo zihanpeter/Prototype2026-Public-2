@@ -82,7 +82,7 @@ public class NewBlueFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path7_toFinalShoot),
-                        new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                        new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                         new TransitCommand(transit, shooter) // Shoots 3 times then finishes
                 )
         );
@@ -103,7 +103,7 @@ public class NewBlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter), // 射球 3 次
 
                 // Path 2: Shoot -> Sample (曲线取球)
@@ -119,7 +119,7 @@ public class NewBlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path3_toShootPose),
-                new AutoAlignCommand(drive, vision).withTimeout(1000),  // Auto-aim before shooting
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter), // 射球 3 次
 
                 // =========================================================

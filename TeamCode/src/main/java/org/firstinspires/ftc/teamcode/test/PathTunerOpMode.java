@@ -208,6 +208,12 @@ public class PathTunerOpMode extends OpMode {
     }
 
     private void drawExpectedPath(TelemetryPacket packet) {
+        // Debug: Draw a test cross at center to verify Dashboard is working
+        packet.fieldOverlay()
+                .setStroke("yellow")
+                .strokeLine(60, 60, 84, 84)
+                .strokeLine(60, 84, 84, 60);
+        
         // Draw start point (blue) and end point (red)
         packet.fieldOverlay()
                 .setStroke("blue")
