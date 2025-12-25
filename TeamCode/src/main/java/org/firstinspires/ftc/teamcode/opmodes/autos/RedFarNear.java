@@ -10,7 +10,6 @@ import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
-import org.firstinspires.ftc.teamcode.commands.autocommands.AutoAlignCommand;
 import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
@@ -75,7 +74,6 @@ public class RedFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -94,7 +92,6 @@ public class RedFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path4_toShootPose),
-                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -108,7 +105,6 @@ public class RedFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path6_toShootPose),
-                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -122,7 +118,6 @@ public class RedFarNear extends AutoCommandBase {
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
                 new AutoDriveCommand(follower, path8_toShootPose),
-                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================

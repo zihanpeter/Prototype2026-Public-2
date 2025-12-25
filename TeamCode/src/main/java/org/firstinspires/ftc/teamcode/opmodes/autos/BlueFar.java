@@ -10,7 +10,6 @@ import com.arcrobotics.ftclib.command.RepeatCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
-import org.firstinspires.ftc.teamcode.commands.autocommands.AutoAlignCommand;
 import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
@@ -67,8 +66,8 @@ public class BlueFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path5_toShootPose),
-                        new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                        new TransitCommand(transit, shooter).withTimeout(1300)
+                        new TransitCommand(transit, shooter).withTimeout(1300),
+                        new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
                 )
         );
 
@@ -86,8 +85,8 @@ public class BlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
+                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
 
                 // =========================================================
                 // 2-6. Infinite Loop: 往返2次 + 射击
