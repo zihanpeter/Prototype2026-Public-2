@@ -261,10 +261,12 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     }
 
     /**
-     * Applies braking by setting motor powers to 0.
-     * Relies on ZeroPowerBehavior.BRAKE.
+     * Applies braking - just sets power to 0 and relies on BRAKE mode.
+     * Motors are already set to ZeroPowerBehavior.BRAKE in constructor.
      */
     private void applyBreak() {
+        // Simply set all motors to 0 power
+        // BRAKE mode will provide electromagnetic resistance
         moveRobot(0, 0, 0);
     }
 
@@ -434,9 +436,10 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         // If no gamepad input is detected, apply brakes to hold position
         if (!isGamepadOn) {
             applyBreak();
+        } else {
+            // Only update lastPose when there IS input
+            // This way, when input stops, we hold the last "active" position
+            lastPose = getPose();
         }
-
-        // Update last recorded pose
-        lastPose = getPose();
     }
 }

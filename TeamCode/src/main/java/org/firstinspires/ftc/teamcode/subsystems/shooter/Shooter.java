@@ -33,6 +33,9 @@ public class Shooter extends SubsystemBase {
     // Flag for manual brake override (takes priority over auto brake)
     public static boolean manualBrakeOverride = false;
     
+    // Auto brake cycle: enabled when shoot button released, disabled once speed reaches stopVelocity
+    private boolean autoBrakeCycleActive = false;
+    
     // PID Controller (Currently unused, replaced by Bang-Bang/Feedforward)
     public final PIDController pidController;
     
@@ -166,6 +169,33 @@ public class Shooter extends SubsystemBase {
         manualBrakeOverride = false;
         releaseBrake();
     }
+    
+    /**
+     * Starts an auto brake cycle.
+     * Called when shoot button (LB/RB/RT) is released.
+     * Brake will stay engaged until speed drops to stopVelocity.
+     */
+    public void startAutoBrakeCycle() {
+        autoBrakeCycleActive = true;
+    }
+    
+    /**
+     * Cancels the auto brake cycle.
+     * Called when shoot button (LB/RB/RT) is pressed.
+     */
+    public void cancelAutoBrakeCycle() {
+        autoBrakeCycleActive = false;
+        if (!manualBrakeOverride) {
+            releaseBrake();
+        }
+    }
+    
+    /**
+     * Checks if auto brake cycle is currently active.
+     */
+    public boolean isAutoBrakeCycleActive() {
+        return autoBrakeCycleActive;
+    }
 
 //    public void setReadyToShoot(boolean ready) {
 //        readyToShoot = ready;
@@ -188,25 +218,26 @@ public class Shooter extends SubsystemBase {
 
         // =================================================================
         // Auto Brake Logic
-        // If current velocity exceeds target by threshold, engage brake
-        // Velocities are negative, so "exceeds" means more negative
-        // currentVel < targetVel - threshold means spinning too fast
-        // Skip auto logic if manual override is active
+        // Triggered when shoot button (LB/RB/RT) is released.
+        // Brake stays engaged until speed drops to stopVelocity (-600 TPS).
+        // Once reached, brake is released and cycle ends.
+        // Skip auto logic if manual override is active.
         // =================================================================
-//        if (!manualBrakeOverride) {
-//            double threshold = ShooterConstants.brakeTriggerThresholdTPS;
-//            if (currentVel < targetVel - threshold) {
-//                // Spinning too fast, engage brake
-//                if (!brakeEngaged) {
-//                    engageBrake();
-//                }
-//            } else {
-//                // Speed is acceptable, release brake
-//                if (brakeEngaged) {
-//                    releaseBrake();
-//                }
-//            }
-//        }
+        if (!manualBrakeOverride && autoBrakeCycleActive) {
+            // Check if speed has dropped to stopVelocity or slower
+            // Velocities are negative: -600 is stopVelocity
+            // currentVel >= stopVelocity means we've slowed down enough (e.g., -500 >= -600)
+            if (currentVel >= ShooterConstants.stopVelocity) {
+                // Speed has dropped to default, end brake cycle
+                autoBrakeCycleActive = false;
+                releaseBrake();
+            } else {
+                // Still decelerating, keep brake engaged
+                if (!brakeEngaged) {
+                    engageBrake();
+                }
+            }
+        }
         // If manualBrakeOverride is true, brake state is controlled manually
 
         // Bang-Bang Control with Simple Feedforward Logic

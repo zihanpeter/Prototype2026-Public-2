@@ -1,12 +1,17 @@
 package org.firstinspires.ftc.teamcode.test;
 
-import com.acmerobotics.dashboard.FtcDashboard;
+import com.bylazar.field.FieldManager;
+import com.bylazar.field.PanelsField;
+import com.bylazar.field.Style;
+import com.bylazar.telemetry.PanelsTelemetry;
+import com.bylazar.telemetry.TelemetryManager;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.math.Vector;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -15,11 +20,11 @@ import org.firstinspires.ftc.teamcode.subsystems.drive.Constants;
 
 /**
  * Path Tuner OpMode
- * Allows dynamic path testing via FTC Dashboard.
+ * Allows dynamic path testing via Panels Dashboard.
  * Supports both BezierLine and BezierCurve.
  *
  * Instructions:
- * 1. Open FTC Dashboard (192.168.43.1:8080/dash).
+ * 1. Open Panels Dashboard (192.168.43.1:8001).
  * 2. Edit start/end/control point values in the Configuration sidebar.
  * 3. Set pathType: 0 = BezierLine, 1 = BezierCurve (1 ctrl), 2 = BezierCurve (2 ctrl), 3 = BezierCurve (3 ctrl)
  * 4. Init this OpMode. The robot will set its pose to 'startPose'.
@@ -31,7 +36,17 @@ import org.firstinspires.ftc.teamcode.subsystems.drive.Constants;
 public class PathTunerOpMode extends OpMode {
 
     private Follower follower;
-    private FtcDashboard dashboard;
+    private FieldManager panelsField;
+    private TelemetryManager telemetryM;
+
+    private static final double ROBOT_RADIUS = 9;
+
+    // Styles for drawing
+    private static final Style pathStyle = new Style("", "#FF5722", 1.0); // Orange path
+    private static final Style robotStyle = new Style("", "#4CAF50", 0.75); // Green robot
+    private static final Style startStyle = new Style("", "#2196F3", 0.75); // Blue start
+    private static final Style endStyle = new Style("", "#F44336", 0.75); // Red end
+    private static final Style ctrlStyle = new Style("", "#FF9800", 0.5); // Orange control points
 
     // Path Type: 0 = Line, 1 = Curve (1 ctrl), 2 = Curve (2 ctrl), 3 = Curve (3 ctrl)
     public static int pathType = 0;
@@ -63,28 +78,28 @@ public class PathTunerOpMode extends OpMode {
 
     @Override
     public void init() {
-        dashboard = FtcDashboard.getInstance();
+        // Initialize Panels Dashboard
+        panelsField = PanelsField.INSTANCE.getField();
+        panelsField.setOffsets(PanelsField.INSTANCE.getPresets().getPEDRO_PATHING());
+        telemetryM = PanelsTelemetry.INSTANCE.getTelemetry();
+
+        // Initialize Follower
         follower = Constants.createFollower(hardwareMap);
 
         telemetry.addData("Status", "Initialized");
+        telemetry.addData("Dashboard", "Use Panels (192.168.43.1:8001)");
         telemetry.addData("Path Type", getPathTypeName());
         telemetry.update();
     }
 
     @Override
     public void init_loop() {
-        // Visualize the intended path on Dashboard before starting
-        TelemetryPacket packet = new TelemetryPacket();
+        // Draw preview path on Panels Dashboard
+        drawExpectedPath();
+        drawStartEndPoints();
 
-        // Draw path based on type
-        drawExpectedPath(packet);
-
-        // Add Data to Dashboard
-        packet.put("Path Type", getPathTypeName());
-        packet.put("Start", String.format("(%.1f, %.1f, %.0f°)", startX, startY, startHeadingDeg));
-        packet.put("End", String.format("(%.1f, %.1f, %.0f°)", endX, endY, endHeadingDeg));
-
-        dashboard.sendTelemetryPacket(packet);
+        // Send to Panels
+        panelsField.update();
 
         // Update Driver Station Telemetry
         telemetry.addData("Path Type", getPathTypeName());
@@ -105,32 +120,31 @@ public class PathTunerOpMode extends OpMode {
     public void loop() {
         follower.update();
 
-        // Create Packet
-        TelemetryPacket packet = new TelemetryPacket();
-
         // Draw the expected path
-        drawExpectedPath(packet);
+        drawExpectedPath();
+        drawStartEndPoints();
 
-        // Draw Robot manually
+        // Draw Robot
+        drawRobot(follower.getPose(), robotStyle);
+
+        // Draw current path if following
+        if (follower.getCurrentPath() != null) {
+            drawPath(follower.getCurrentPath(), pathStyle);
+        }
+
+        // Send to Panels
+        panelsField.update();
+
+        // Dashboard Telemetry via Panels
         Pose currentPose = follower.getPose();
-        packet.fieldOverlay()
-                .setFill("blue")
-                .fillCircle(currentPose.getX(), currentPose.getY(), 2)
-                .setStroke("black")
-                .strokeLine(currentPose.getX(), currentPose.getY(),
-                        currentPose.getX() + 7 * Math.cos(currentPose.getHeading()),
-                        currentPose.getY() + 7 * Math.sin(currentPose.getHeading()));
-
-        // Dashboard Telemetry
-        packet.put("Path Running", follower.isBusy());
-        packet.put("X", currentPose.getX());
-        packet.put("Y", currentPose.getY());
-        packet.put("Heading", Math.toDegrees(currentPose.getHeading()));
+        telemetryM.debug("Path Running: " + follower.isBusy());
+        telemetryM.debug("X: " + currentPose.getX());
+        telemetryM.debug("Y: " + currentPose.getY());
+        telemetryM.debug("Heading: " + Math.toDegrees(currentPose.getHeading()));
 
         double distToEnd = Math.hypot(endX - currentPose.getX(), endY - currentPose.getY());
-        packet.put("Dist to End", distToEnd);
-
-        dashboard.sendTelemetryPacket(packet);
+        telemetryM.debug("Dist to End: " + distToEnd);
+        telemetryM.update(telemetry);
 
         // Driver Station Telemetry
         telemetry.addData("Path Running", follower.isBusy());
@@ -207,67 +221,103 @@ public class PathTunerOpMode extends OpMode {
         pathRunning = true;
     }
 
-    private void drawExpectedPath(TelemetryPacket packet) {
-        // Debug: Draw a test cross at center to verify Dashboard is working
-        packet.fieldOverlay()
-                .setStroke("yellow")
-                .strokeLine(60, 60, 84, 84)
-                .strokeLine(60, 84, 84, 60);
-        
-        // Draw start point (blue) and end point (red)
-        packet.fieldOverlay()
-                .setStroke("blue")
-                .strokeCircle(startX, startY, 2)
-                .setStroke("red")
-                .strokeCircle(endX, endY, 2);
+    private void drawExpectedPath() {
+        // Draw the expected path based on type
+        int samples = 30;
 
-        // Draw path based on type
-        if (pathType == 0) {
-            // Simple line
-            packet.fieldOverlay()
-                    .setStroke("green")
-                    .strokeLine(startX, startY, endX, endY);
-        } else {
-            // Draw Bezier curve approximation (sample points along curve)
-            drawBezierCurve(packet);
+        for (int i = 0; i < samples; i++) {
+            double t1 = (double) i / samples;
+            double t2 = (double) (i + 1) / samples;
 
-            // Draw control points (orange)
-            packet.fieldOverlay().setStroke("orange");
-            if (pathType >= 1) {
-                packet.fieldOverlay().strokeCircle(ctrl1X, ctrl1Y, 1.5);
-                packet.fieldOverlay().setStroke("gray").strokeLine(startX, startY, ctrl1X, ctrl1Y);
-            }
-            if (pathType >= 2) {
-                packet.fieldOverlay().setStroke("orange").strokeCircle(ctrl2X, ctrl2Y, 1.5);
-            }
-            if (pathType >= 3) {
-                packet.fieldOverlay().setStroke("orange").strokeCircle(ctrl3X, ctrl3Y, 1.5);
-                packet.fieldOverlay().setStroke("gray").strokeLine(ctrl3X, ctrl3Y, endX, endY);
-            }
+            double[] p1 = calculateBezierPoint(t1);
+            double[] p2 = calculateBezierPoint(t2);
+
+            panelsField.setStyle(pathStyle);
+            panelsField.moveCursor(p1[0], p1[1]);
+            panelsField.line(p2[0], p2[1]);
+        }
+
+        // Draw control points for curves
+        if (pathType >= 1) {
+            drawCircle(ctrl1X, ctrl1Y, 2, ctrlStyle);
+            // Draw line from start to ctrl1
+            panelsField.setStyle(ctrlStyle);
+            panelsField.moveCursor(startX, startY);
+            panelsField.line(ctrl1X, ctrl1Y);
+        }
+        if (pathType >= 2) {
+            drawCircle(ctrl2X, ctrl2Y, 2, ctrlStyle);
+        }
+        if (pathType >= 3) {
+            drawCircle(ctrl3X, ctrl3Y, 2, ctrlStyle);
+            // Draw line from ctrl3 to end
+            panelsField.setStyle(ctrlStyle);
+            panelsField.moveCursor(ctrl3X, ctrl3Y);
+            panelsField.line(endX, endY);
         }
     }
 
-    private void drawBezierCurve(TelemetryPacket packet) {
-        // Sample 20 points along the Bezier curve and draw line segments
-        int samples = 20;
-        double[] lastPoint = {startX, startY};
+    private void drawStartEndPoints() {
+        // Draw start point (blue)
+        drawCircle(startX, startY, 4, startStyle);
+        // Draw end point (red)
+        drawCircle(endX, endY, 4, endStyle);
+    }
 
-        for (int i = 1; i <= samples; i++) {
-            double t = (double) i / samples;
-            double[] point = calculateBezierPoint(t);
+    private void drawCircle(double x, double y, double radius, Style style) {
+        panelsField.setStyle(style);
+        panelsField.moveCursor(x, y);
+        panelsField.circle(radius);
+    }
 
-            packet.fieldOverlay()
-                    .setStroke("green")
-                    .strokeLine(lastPoint[0], lastPoint[1], point[0], point[1]);
-
-            lastPoint = point;
+    private void drawRobot(Pose pose, Style style) {
+        if (pose == null || Double.isNaN(pose.getX()) || Double.isNaN(pose.getY()) || Double.isNaN(pose.getHeading())) {
+            return;
         }
+
+        panelsField.setStyle(style);
+        panelsField.moveCursor(pose.getX(), pose.getY());
+        panelsField.circle(ROBOT_RADIUS);
+
+        // Draw heading line
+        Vector v = pose.getHeadingAsUnitVector();
+        v.setMagnitude(v.getMagnitude() * ROBOT_RADIUS);
+        double x1 = pose.getX() + v.getXComponent() / 2;
+        double y1 = pose.getY() + v.getYComponent() / 2;
+        double x2 = pose.getX() + v.getXComponent();
+        double y2 = pose.getY() + v.getYComponent();
+
+        panelsField.setStyle(style);
+        panelsField.moveCursor(x1, y1);
+        panelsField.line(x2, y2);
+    }
+
+    private void drawPath(Path path, Style style) {
+        double[][] points = path.getPanelsDrawingPoints();
+        if (points == null || points.length < 2) return;
+
+        for (int i = 0; i < points[0].length; i++) {
+            for (int j = 0; j < points.length; j++) {
+                if (Double.isNaN(points[j][i])) {
+                    points[j][i] = 0;
+                }
+            }
+        }
+
+        panelsField.setStyle(style);
+        panelsField.moveCursor(points[0][0], points[0][1]);
+        panelsField.line(points[1][0], points[1][1]);
     }
 
     private double[] calculateBezierPoint(double t) {
         double x, y;
 
         switch (pathType) {
+            case 0: // Linear
+                x = (1 - t) * startX + t * endX;
+                y = (1 - t) * startY + t * endY;
+                break;
+
             case 1: // Quadratic Bezier (1 control point)
                 x = Math.pow(1 - t, 2) * startX + 2 * (1 - t) * t * ctrl1X + Math.pow(t, 2) * endX;
                 y = Math.pow(1 - t, 2) * startY + 2 * (1 - t) * t * ctrl1Y + Math.pow(t, 2) * endY;

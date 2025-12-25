@@ -68,7 +68,7 @@ public class BlueFar extends AutoCommandBase {
                         }),
                         new AutoDriveCommand(follower, path5_toShootPose),
                         new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                        new TransitCommand(transit, shooter) // Shoots 3 times then finishes
+                        new TransitCommand(transit, shooter).withTimeout(1300)
                 )
         );
 
@@ -87,7 +87,7 @@ public class BlueFar extends AutoCommandBase {
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                new TransitCommand(transit, shooter), // Shoots 3 times then finishes
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
                 // 2-6. Infinite Loop: 往返2次 + 射击

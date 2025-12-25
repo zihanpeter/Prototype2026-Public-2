@@ -42,6 +42,10 @@ public class DriveConstants {
     // PID Coefficients (if used for active control)
     public static double kP_xy = 0.02;
     public static double kP_h = -0.8;
+    
+    // Position Hold (Brake) PID Coefficients
+    public static double kP_brakeXY = 0.02;  // P gain for XY position hold
+    public static double kP_brakeH = -0.8;   // P gain for heading hold (negative!)
 
     // Gamepad Input Deadband
     // Minimum input value required to trigger robot movement.
