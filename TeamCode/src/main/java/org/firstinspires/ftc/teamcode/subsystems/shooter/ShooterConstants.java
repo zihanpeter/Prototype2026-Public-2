@@ -13,8 +13,9 @@ public class ShooterConstants {
     public static String shooterServoName = "shooterServo";
     public static String brakeServoName = "brakeServo";
 
-    // PID Tolerance (ticks) - Used for telemetry or checks
-    public static double shooterEpsilon = 20;
+    // Velocity tolerance (TPS) - Used to check if shooter is at target speed
+    // Increased from 20 to 100 for more reliable firing
+    public static double shooterEpsilon = 100;
 
     // PID Coefficients (Currently unused for main control loop)
     public static double kP = 0.5;
@@ -30,7 +31,13 @@ public class ShooterConstants {
      * Target Velocities (in Ticks Per Second)
      * Negative values indicate direction.
      */
-    public static double stopVelocity = -600;  // Idle speed
+    // Idle power (open-loop, no PID control)
+    public static double idlePower = 0.27;
+    
+    // Brake release threshold: release brake when speed drops below this (TPS)
+    public static double brakeReleaseThresholdTPS = -680;
+    
+    public static double stopVelocity = -600;  // Legacy, used for reference only
     public static double fastVelocity = -1400; // Updated for 6000RPM motor (~75% power)
     public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
     public static double slowVelocity = -900;  // Low speed for close/safe shots (~21% power)
@@ -67,4 +74,22 @@ public class ShooterConstants {
     // 100 RPM = 100/60 * 28 ticks = ~47 TPS
     // If current velocity exceeds target by this amount, engage brake
     public static double brakeTriggerThresholdTPS = 47.0; // ~100 RPM
+    
+    // ==================== ADAPTIVE SHOOTING ====================
+    // Goal coordinates (in inches)
+    public static double blueGoalX = 4;
+    public static double blueGoalY = 140;
+    public static double redGoalX = 140;
+    public static double redGoalY = 140;
+    
+    // Distance range for velocity interpolation
+    public static double nearDistance = 60;   // Distance for slowVelocity
+    public static double farDistance = 120;   // Distance for fastVelocity
+    
+    // Distance range for servo angle interpolation (non-linear)
+    public static double servoNearDistance = 25;   // Distance for shooterServoDownPos (0.85)
+    public static double servoFarDistance = 134;   // Distance for shooterServoUpPos (0.29)
+    
+    // Auto-fire threshold (degrees)
+    public static double autoFireTxThreshold = 4.0;  // Allow fire when |tx| < this
 }

@@ -4,6 +4,7 @@ import static org.firstinspires.ftc.teamcode.subsystems.drive.DriveConstants.str
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.command.SubsystemBase;
+import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.ShooterConstants;
 import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 import org.firstinspires.ftc.teamcode.utils.Util;
 
@@ -38,9 +40,37 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     // Flag to track if vision calibration has been performed
     private boolean hasVisionCalibrated = false;
     
+    // ==================== ABSOLUTE FIELD COORDINATES ====================
+    // Fused localization: Vision when available, odometry dead-reckoning otherwise
+    private double absoluteX = 0;           // Absolute X in field (inches)
+    private double absoluteY = 0;           // Absolute Y in field (inches)
+    private double absoluteHeading = 0;     // Absolute heading in field (radians)
+    
+    // Last odometry pose for dead-reckoning delta calculation
+    private Pose2D lastOdoPose = null;
+    
+    // Flag to track if we have a valid absolute position
+    private boolean hasAbsolutePosition = false;
+    
     // Auto-aim: Last aligned tag info
     private int lastAlignedTagId = -1;           // Which tag we last aligned to
     private boolean hasLastAlignedTag = false;   // Whether we have a record
+    
+    // Auto-aim PID Controller (like Prototype2026-Public)
+    private final PIDController alignPID;
+    
+    // Auto-aim PID constants (tunable via Dashboard)
+    public static double kP_alignH = 0.018;      // P gain for auto-aim (reduced to prevent overshoot)
+    public static double kI_alignH = 0;          // I gain for auto-aim
+    public static double kD_alignH = 0.003;      // D gain for auto-aim (slightly increased for damping)
+    
+    // Auto-aim offset constants
+    public static double farDistanceThreshold = 94;  // Distance threshold for offset (inches)
+    public static double farOffsetDegrees = 2.0;        // Offset in degrees for far shots
+    
+    // Cached offset to prevent jitter
+    private double currentOffset = 0;
+    private boolean offsetLocked = false;
 
     /**
      * Constructor for MecanumDrivePinpoint.
@@ -92,6 +122,16 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         rightBackMotor.setDirection(DcMotorSimple.Direction.FORWARD);
 
         lastPose = new Pose2D(DriveConstants.distanceUnit, 0, 0, DriveConstants.angleUnit, 0);
+        
+        // Initialize auto-aim PID controller
+        alignPID = new PIDController(kP_alignH, kI_alignH, kD_alignH);
+        
+        // Initialize absolute field coordinates to (0, 0, 0)
+        absoluteX = 0;
+        absoluteY = 0;
+        absoluteHeading = 0;
+        hasAbsolutePosition = false;
+        lastOdoPose = null;
     }
 
     /**
@@ -147,10 +187,13 @@ public class MecanumDrivePinpoint extends SubsystemBase {
      * @param turn Rotation speed.
      */
     public void moveRobotFieldRelative(double forward, double fun, double turn) {
-        // Deadband check to stop drift
-        if (Math.abs(forward) < DriveConstants.deadband &&
-            Math.abs(fun) < DriveConstants.deadband &&
-            Math.abs(turn) < DriveConstants.deadband) {
+        // Apply deadband only to joystick inputs (forward/strafe), not turn
+        // This allows auto-aim small turn values to work
+        if (Math.abs(forward) < DriveConstants.deadband) forward = 0;
+        if (Math.abs(fun) < DriveConstants.deadband) fun = 0;
+        
+        // If all inputs are zero, stop
+        if (forward == 0 && fun == 0 && Math.abs(turn) < DriveConstants.deadband) {
             stop();
             return;
         }
@@ -261,13 +304,23 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     }
 
     /**
-     * Applies braking - just sets power to 0 and relies on BRAKE mode.
-     * Motors are already set to ZeroPowerBehavior.BRAKE in constructor.
+     * Applies motor brake by setting power to 0.
+     * Relies on ZeroPowerBehavior.BRAKE to hold position.
      */
     private void applyBreak() {
-        // Simply set all motors to 0 power
-        // BRAKE mode will provide electromagnetic resistance
-        moveRobot(0, 0, 0);
+        leftFrontMotor.setPower(0);
+        leftBackMotor.setPower(0);
+        rightFrontMotor.setPower(0);
+        rightBackMotor.setPower(0);
+    }
+    
+    /**
+     * Wraps an angle to the range [-π, π].
+     */
+    private double angleWrap(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
     }
 
     /**
@@ -344,35 +397,74 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     
     /**
      * Gets the turn power for auto-aim using Limelight's tx value.
-     * Simple and direct - no coordinate conversion needed!
+     * Uses full PID control (like Prototype2026-Public).
+     * 
+     * Includes distance-based offset compensation:
+     * - If distance > farDistanceThreshold inches:
+     *   - Blue goal (tag 20): offset left by farOffsetDegrees
+     *   - Red goal (tag 24): offset right by farOffsetDegrees
      * 
      * @param vision The Vision subsystem.
      * @return Turn power (-1 to 1). Positive = turn right, Negative = turn left.
-     */
-    /**
-     * A button: Align to goal tag currently in view.
-     * Only works if seeing tag 20 or 24.
-     * Records which tag we aligned to.
-     * 
-     * @return Turn power (-1 to 1)
      */
     public double getAlignTurnPower(Vision vision) {
         int tagId = vision.getDetectedTagId();
         boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
         
         if (!isGoalTag) {
-            return 0;  // No goal tag in view, do nothing
+            // Reset offset lock and PID when not seeing goal tag
+            offsetLocked = false;
+            currentOffset = 0;
+            alignPID.reset();
+            return 0;
         }
         
         // Record which tag we're aligning to
         lastAlignedTagId = tagId;
         hasLastAlignedTag = true;
         
-        // Use tx to align
+        // Update PID coefficients in case they were changed via Dashboard
+        alignPID.setPID(kP_alignH, kI_alignH, kD_alignH);
+        
+        // Get tx value (horizontal offset in degrees)
         double tx = vision.getTx();
-        double kP = 0.025;
-        double turn = tx * kP;
+        
+        // Distance-based offset compensation
+        // Lock the offset once determined to prevent jitter
+        if (!offsetLocked) {
+            double distance = vision.getDistanceToTag();
+            
+            if (distance > 0 && distance > farDistanceThreshold) {
+                // Far shot: apply offset
+                if (tagId == Vision.BLUE_GOAL_TAG_ID) {
+                    currentOffset = -farOffsetDegrees;  // Blue goal: offset left
+                } else {
+                    currentOffset = farOffsetDegrees;   // Red goal: offset right
+                }
+            } else {
+                currentOffset = 0;  // Close shot: no offset
+            }
+            offsetLocked = true;  // Lock to prevent jitter
+        }
+        
+        // Target is to get tx to equal -currentOffset (so tx + offset = 0)
+        // PID: calculate(current, setpoint) returns value to move current toward setpoint
+        // We need to negate because:
+        // - tx > 0 means target is to the right, we need to turn right (positive turn)
+        // - But PID outputs negative when current > setpoint
+        double turn = -alignPID.calculate(tx, -currentOffset);
+        
         return Math.max(-1, Math.min(1, turn));
+    }
+    
+    /**
+     * Resets the auto-aim offset lock and PID.
+     * Call this when releasing the aim button.
+     */
+    public void resetAutoAimOffset() {
+        offsetLocked = false;
+        currentOffset = 0;
+        alignPID.reset();
     }
     
     /**
@@ -428,6 +520,249 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         lastAlignedTagId = -1;
     }
 
+    // ==================== ABSOLUTE POSITION UPDATE ====================
+    
+    /**
+     * Updates absolute field position from Vision (when goal tag is visible).
+     * Call this when tag 20 or 24 is detected.
+     * 
+     * @param vision The Vision subsystem
+     * @return true if vision update was successful
+     */
+    public boolean updateAbsolutePositionFromVision(Vision vision) {
+        int tagId = vision.getDetectedTagId();
+        boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
+        
+        if (!isGoalTag) {
+            return false;
+        }
+        
+        Pose3D visionPose = vision.getRobotPose();
+        if (visionPose == null) {
+            return false;
+        }
+        
+        // Convert Limelight Pose3D to field coordinates
+        // Limelight coordinate system: origin at field center, range -72 to +72 inches
+        // Field coordinate system: origin at field corner, range 0 to 144 inches
+        // Conversion formula (from Prototype2026-Public):
+        //   fieldX = limelightY (meters to inches) + 72
+        //   fieldY = -limelightX (meters to inches) + 72
+        //   fieldHeading = yaw (degrees to radians) - π/2
+        double metersToInches = 39.3701;
+        absoluteX = visionPose.getPosition().y * metersToInches + 72;
+        absoluteY = -visionPose.getPosition().x * metersToInches + 72;
+        absoluteHeading = Math.toRadians(visionPose.getOrientation().getYaw()) - Math.PI / 2;
+        
+        hasAbsolutePosition = true;
+        
+        // Update lastOdoPose for delta calculation when vision is lost
+        lastOdoPose = getPose();
+        
+        return true;
+    }
+    
+    /**
+     * Updates absolute field position using odometry dead-reckoning.
+     * Call this when no goal tag is visible.
+     * Uses delta from last odometry reading to update absolute position.
+     */
+    public void updateAbsolutePositionFromOdometry() {
+        Pose2D currentOdoPose = getPose();
+        
+        if (lastOdoPose == null) {
+            // First time, just record current pose
+            lastOdoPose = currentOdoPose;
+            return;
+        }
+        
+        if (!hasAbsolutePosition) {
+            // No valid absolute position yet, just update lastOdoPose
+            lastOdoPose = currentOdoPose;
+            return;
+        }
+        
+        // Calculate delta from odometry
+        double deltaX = currentOdoPose.getX(DistanceUnit.INCH) - lastOdoPose.getX(DistanceUnit.INCH);
+        double deltaY = currentOdoPose.getY(DistanceUnit.INCH) - lastOdoPose.getY(DistanceUnit.INCH);
+        double deltaHeading = currentOdoPose.getHeading(AngleUnit.RADIANS) - lastOdoPose.getHeading(AngleUnit.RADIANS);
+        
+        // Apply delta to absolute position
+        absoluteX += deltaX;
+        absoluteY += deltaY;
+        absoluteHeading += deltaHeading;
+        
+        // Normalize heading to [-π, π]
+        absoluteHeading = angleWrap(absoluteHeading);
+        
+        // Update lastOdoPose
+        lastOdoPose = currentOdoPose;
+    }
+    
+    /**
+     * Gets the absolute X coordinate in field (inches).
+     */
+    public double getAbsoluteX() {
+        return absoluteX;
+    }
+    
+    /**
+     * Gets the absolute Y coordinate in field (inches).
+     */
+    public double getAbsoluteY() {
+        return absoluteY;
+    }
+    
+    /**
+     * Gets the absolute heading in field (radians).
+     */
+    public double getAbsoluteHeading() {
+        return absoluteHeading;
+    }
+    
+    /**
+     * Checks if we have a valid absolute position.
+     */
+    public boolean hasAbsolutePosition() {
+        return hasAbsolutePosition;
+    }
+    
+    /**
+     * Resets absolute position to (0, 0, 0).
+     */
+    public void resetAbsolutePosition() {
+        absoluteX = 0;
+        absoluteY = 0;
+        absoluteHeading = 0;
+        hasAbsolutePosition = false;
+        lastOdoPose = null;
+    }
+    
+    /**
+     * Calculates distance from absolute position to a target point.
+     * 
+     * @param targetX Target X in inches
+     * @param targetY Target Y in inches
+     * @return Distance in inches, or -1 if no valid absolute position
+     */
+    public double distanceToPoint(double targetX, double targetY) {
+        if (!hasAbsolutePosition) {
+            return -1;
+        }
+        double dx = targetX - absoluteX;
+        double dy = targetY - absoluteY;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+    
+    // ==================== ADAPTIVE SHOOTING ====================
+    
+    /**
+     * Calculates distance to goal based on detected tag.
+     * - Blue goal (tag 20): (4, 140)
+     * - Red goal (tag 24): (140, 140)
+     * 
+     * @param tagId The detected tag ID
+     * @return Distance in inches, or -1 if invalid
+     */
+    public double distanceToGoal(int tagId) {
+        if (!hasAbsolutePosition) {
+            return -1;
+        }
+        
+        double targetX, targetY;
+        if (tagId == Vision.BLUE_GOAL_TAG_ID) {
+            targetX = ShooterConstants.blueGoalX;
+            targetY = ShooterConstants.blueGoalY;
+        } else if (tagId == Vision.RED_GOAL_TAG_ID) {
+            targetX = ShooterConstants.redGoalX;
+            targetY = ShooterConstants.redGoalY;
+        } else {
+            return -1;  // Not a goal tag
+        }
+        
+        return distanceToPoint(targetX, targetY);
+    }
+    
+    /**
+     * Calculates theoretical shooter velocity based on distance to goal.
+     * Uses linear interpolation between slowVelocity and fastVelocity.
+     * 
+     * @param tagId The detected tag ID
+     * @return Target velocity in TPS (negative), defaults to midVelocity if no valid distance
+     */
+    public double calculateAdaptiveVelocity(int tagId) {
+        double distance = distanceToGoal(tagId);
+        
+        if (distance < 0) {
+            // No valid distance, use mid velocity as default
+            return ShooterConstants.midVelocity;
+        }
+        
+        // Clamp distance to range
+        if (distance <= ShooterConstants.nearDistance) {
+            return ShooterConstants.slowVelocity;
+        }
+        if (distance >= ShooterConstants.farDistance) {
+            return ShooterConstants.fastVelocity;
+        }
+        
+        // Linear interpolation
+        // velocity = slow + (fast - slow) * (distance - near) / (far - near)
+        double ratio = (distance - ShooterConstants.nearDistance) 
+                     / (ShooterConstants.farDistance - ShooterConstants.nearDistance);
+        
+        return ShooterConstants.slowVelocity 
+             + (ShooterConstants.fastVelocity - ShooterConstants.slowVelocity) * ratio;
+    }
+    
+    /**
+     * Calculates adaptive servo position based on distance to goal.
+     * Uses non-linear (square root) interpolation:
+     * - Near distance changes servo angle more rapidly
+     * - Far distance changes servo angle more slowly
+     * 
+     * @param tagId The detected tag ID
+     * @return Servo position (0.85 for near, 0.29 for far), defaults to mid position if invalid
+     */
+    public double calculateAdaptiveServoPosition(int tagId) {
+        double distance = distanceToGoal(tagId);
+        
+        if (distance < 0) {
+            // No valid distance, use mid servo position as default
+            return ShooterConstants.shooterServoMidPos;
+        }
+        
+        // Clamp distance to range
+        if (distance <= ShooterConstants.servoNearDistance) {
+            return ShooterConstants.shooterServoDownPos;  // 0.85 (near/low angle)
+        }
+        if (distance >= ShooterConstants.servoFarDistance) {
+            return ShooterConstants.shooterServoUpPos;    // 0.29 (far/high angle)
+        }
+        
+        // Non-linear interpolation using square root
+        // sqrt makes the curve steep at the beginning (near) and flat at the end (far)
+        // ratio = sqrt((distance - near) / (far - near))
+        double normalizedDistance = (distance - ShooterConstants.servoNearDistance) 
+                                  / (ShooterConstants.servoFarDistance - ShooterConstants.servoNearDistance);
+        double ratio = Math.sqrt(normalizedDistance);
+        
+        // Interpolate: down (0.85) -> up (0.29)
+        // servoPos = down + (up - down) * ratio = 0.85 + (0.29 - 0.85) * ratio = 0.85 - 0.56 * ratio
+        return ShooterConstants.shooterServoDownPos 
+             + (ShooterConstants.shooterServoUpPos - ShooterConstants.shooterServoDownPos) * ratio;
+    }
+    
+    /**
+     * Checks if auto-fire is allowed (aligned within threshold).
+     * 
+     * @param tx The horizontal offset in degrees from Vision
+     * @return true if |tx| < autoFireTxThreshold
+     */
+    public boolean isAutoFireAllowed(double tx) {
+        return Math.abs(tx) < ShooterConstants.autoFireTxThreshold;
+    }
+    
     @Override
     public void periodic() {
         // Update Pinpoint driver to ensure latest data is available
@@ -436,10 +771,9 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         // If no gamepad input is detected, apply brakes to hold position
         if (!isGamepadOn) {
             applyBreak();
-        } else {
-            // Only update lastPose when there IS input
-            // This way, when input stops, we hold the last "active" position
-            lastPose = getPose();
         }
+
+        // Update last recorded pose
+        lastPose = getPose();
     }
 }

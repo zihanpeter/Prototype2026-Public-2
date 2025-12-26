@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Multi-Gate version: Shoots at intermediate position after each sample pickup.
  * 10 paths total.
  */
-@Autonomous(name = "Blue Near Multi-Gate", group = "Blue")
+@Autonomous(name = "Blue Near Multi-Gate", group = "Near")
 public class BlueNearMultiGate extends AutoCommandBase {
 
     // Path chains (11 paths - added parking)

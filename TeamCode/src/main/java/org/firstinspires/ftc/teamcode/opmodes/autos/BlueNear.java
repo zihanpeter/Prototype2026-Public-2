@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Autonomous OpMode for the Blue Alliance (Near Side).
  * Updated with new 8-path JSON data.
  */
-@Autonomous(name = "Blue Near Auto", group = "Blue")
+@Autonomous(name = "Blue Near Auto", group = "Near")
 public class BlueNear extends AutoCommandBase {
 
     // Path chains (9 paths now - added parking)

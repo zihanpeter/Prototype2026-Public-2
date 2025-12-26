@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Phase 1: Start -> Shoot -> Sample -> Shoot (once)
  * Phase 2: BlueFar loop (Shoot -> Sample1 -> PushZone -> Sample2 -> Shoot) infinite
  */
-@Autonomous(name = "New Blue Far Auto", group = "Blue")
+@Autonomous(name = "New Blue Far Auto", group = "Far")
 public class NewBlueFar extends AutoCommandBase {
 
     // Path chains - Phase 1 (new paths)
@@ -81,8 +81,7 @@ public class NewBlueFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path7_toFinalShoot),
-                        new TransitCommand(transit, shooter).withTimeout(1300),
-                        new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
+                        new TransitCommand(transit, shooter) // Shoots 3 times then finishes
                 )
         );
 
@@ -102,24 +101,22 @@ public class NewBlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(1300),
-                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new TransitCommand(transit, shooter),
 
-                // Path 2: Shoot -> Sample (曲线取球)
+                // Path 2: Shoot -> Sample
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                     intake.setFastShooting(false);
                 }),
                 new AutoDriveCommand(follower, path2_toSamplePose),
 
-                // Path 3: Sample -> Shoot (返回射球)
+                // Path 3: Sample -> Shoot
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.FAST);
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path3_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(1300),
-                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new TransitCommand(transit, shooter),
 
                 // =========================================================
                 // Phase 2: BlueFar loop (无限循环)

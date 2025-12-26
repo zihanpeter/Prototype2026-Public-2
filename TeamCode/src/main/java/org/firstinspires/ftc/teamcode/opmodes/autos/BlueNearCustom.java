@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Custom version: Copy of Multi-Gate for tuning.
  * 10 paths total.
  */
-@Autonomous(name = "Blue Near Custom", group = "Blue")
+@Autonomous(name = "Blue Near Custom", group = "Near")
 public class BlueNearCustom extends AutoCommandBase {
 
     // Path chains (10 paths - Sample 3 goes directly to Shoot, added parking)

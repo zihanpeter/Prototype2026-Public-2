@@ -287,6 +287,43 @@ public class Vision extends SubsystemBase {
     }
     
     /**
+     * Gets the distance from robot to the detected AprilTag in inches.
+     * Uses the robot pose in target space to calculate distance.
+     * 
+     * @return Distance in inches, or -1 if no valid tag detected.
+     */
+    public double getDistanceToTag() {
+        LLResult result = limelight.getLatestResult();
+        if (result == null || !result.isValid()) {
+            return -1;
+        }
+        
+        List<FiducialResult> fiducialResults = result.getFiducialResults();
+        if (fiducialResults.isEmpty()) {
+            return -1;
+        }
+        
+        FiducialResult firstTag = fiducialResults.get(0);
+        
+        // Get robot pose relative to target (in meters)
+        Pose3D robotPoseTargetSpace = firstTag.getRobotPoseTargetSpace();
+        if (robotPoseTargetSpace == null) {
+            return -1;
+        }
+        
+        // Get position components (in meters)
+        double x = robotPoseTargetSpace.getPosition().x;
+        double y = robotPoseTargetSpace.getPosition().y;
+        double z = robotPoseTargetSpace.getPosition().z;
+        
+        // Calculate 3D distance and convert from meters to inches
+        double distanceMeters = Math.sqrt(x * x + y * y + z * z);
+        double distanceInches = distanceMeters * 39.3701;  // 1 meter = 39.3701 inches
+        
+        return distanceInches;
+    }
+    
+    /**
      * Gets the raw robot pose WITHOUT any filtering (for debugging).
      * @return Pose3D or null if no fiducial results.
      */

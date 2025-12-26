@@ -17,7 +17,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Autonomous OpMode for the Red Alliance.
  * Starts from FAR position, then follows Near paths. Mirrored from Blue.
  */
-@Autonomous(name = "Red Far-Near Auto", group = "Red")
+@Autonomous(name = "Red Far-Near Auto", group = "Far")
 public class RedFarNear extends AutoCommandBase {
 
     // Path chains (9 paths - same as RedNear but starts from Far)

@@ -126,6 +126,7 @@ public class DashTuner extends LinearOpMode {
                         TelemetryPacket packet = new TelemetryPacket();
                         packet.put("targetVelocity " + i, motorTarget[i]);
                         packet.put("Velocity " + i, v);
+                        packet.put("TPS " + i, v);  // Ticks Per Second
 
                         dashboard.sendTelemetryPacket(packet);
                     }
@@ -133,12 +134,14 @@ public class DashTuner extends LinearOpMode {
                         pidControllers[i].setPID(PIDs[i].kP, PIDs[i].kI, PIDs[i].kD);
 
                         double pos = motors[i].getCurrentPosition();
+                        double v = motors[i].getVelocity();  // Get velocity for TPS
 
                         motors[i].setPower(pidControllers[i].calculate(pos, motorTarget[i]));
 
                         TelemetryPacket packet = new TelemetryPacket();
                         packet.put("targetPosition " + i, motorTarget[i]);
                         packet.put("currentPosition " + i, pos);
+                        packet.put("TPS " + i, v);  // Ticks Per Second
 
                         dashboard.sendTelemetryPacket(packet);
                     }
@@ -147,8 +150,8 @@ public class DashTuner extends LinearOpMode {
                         double v = motors[i].getVelocity();
 
                         TelemetryPacket packet = new TelemetryPacket();
-                        packet.put("currentVelocity " + i, v);
-                        packet.put("Velocity " + i, motors[i].getVelocity());
+                        packet.put("Power " + i, motorTarget[i]);
+                        packet.put("TPS " + i, v);  // Ticks Per Second
 
                         dashboard.sendTelemetryPacket(packet);
                     }

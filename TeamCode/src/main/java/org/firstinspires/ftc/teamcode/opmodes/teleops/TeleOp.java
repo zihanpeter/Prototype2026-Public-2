@@ -14,6 +14,8 @@ import com.bylazar.configurables.annotations.Configurable;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 import org.firstinspires.ftc.teamcode.commands.TeleOpDriveCommand;
 import org.firstinspires.ftc.teamcode.utils.FunctionalButton;
 import org.firstinspires.ftc.teamcode.controls.DriverControls;
@@ -31,7 +33,7 @@ import org.firstinspires.ftc.teamcode.subsystems.Robot;
  */
 @Config
 @Configurable
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "TeleOp", group = "TeleOp")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Solo", group = "TeleOp")
 public class TeleOp extends CommandOpMode {
     private Robot robot;
     private GamepadEx gamepadEx1;
@@ -66,11 +68,21 @@ public class TeleOp extends CommandOpMode {
     public void run() {
         CommandScheduler.getInstance().run();
         
-        // --- Pose Telemetry ---
+        // --- Odometry Pose Telemetry ---
         Pose2D pose = robot.drive.getPose();
-        telemetry.addData("X", String.format("%.2f in", pose.getX(DistanceUnit.INCH)));
-        telemetry.addData("Y", String.format("%.2f in", pose.getY(DistanceUnit.INCH)));
-        telemetry.addData("Heading", String.format("%.1f deg", Math.toDegrees(pose.getHeading(AngleUnit.RADIANS))));
+        telemetry.addData("Odo X", String.format("%.2f in", pose.getX(DistanceUnit.INCH)));
+        telemetry.addData("Odo Y", String.format("%.2f in", pose.getY(DistanceUnit.INCH)));
+        telemetry.addData("Odo Heading", String.format("%.1f deg", Math.toDegrees(pose.getHeading(AngleUnit.RADIANS))));
+        
+        // --- Absolute Field Position (Fused: Vision + Odometry) ---
+        telemetry.addLine("=== ABSOLUTE POSITION ===");
+        if (robot.drive.hasAbsolutePosition()) {
+            telemetry.addData("Abs X", String.format("%.2f in", robot.drive.getAbsoluteX()));
+            telemetry.addData("Abs Y", String.format("%.2f in", robot.drive.getAbsoluteY()));
+            telemetry.addData("Abs Heading", String.format("%.1f deg", Math.toDegrees(robot.drive.getAbsoluteHeading())));
+        } else {
+            telemetry.addData("Abs Position", "NOT INITIALIZED (need to see tag 20/24)");
+        }
         
         // --- Auto-Aim Status ---
         boolean aPressed = gamepadEx1.getButton(GamepadKeys.Button.A);
@@ -80,12 +92,12 @@ public class TeleOp extends CommandOpMode {
         boolean shouldAlign = aPressed || shootPressed;
         
         int currentTagId = robot.vision.getDetectedTagId();
+        boolean isGoalTag = (currentTagId == Vision.BLUE_GOAL_TAG_ID || currentTagId == Vision.RED_GOAL_TAG_ID);
         
         telemetry.addLine("=== AUTO-AIM ===");
         
         // Current state
         if (shouldAlign) {
-            boolean isGoalTag = (currentTagId == 20 || currentTagId == 24);
             String trigger = aPressed ? "A" : "SHOOT";
             telemetry.addData("Mode", trigger + ": ALIGNING");
             telemetry.addData("Sees Goal Tag", isGoalTag ? "YES (" + currentTagId + ")" : "NO");
@@ -95,14 +107,47 @@ public class TeleOp extends CommandOpMode {
             telemetry.addData("Current Tag", currentTagId != -1 ? currentTagId : "None");
         }
         
-        // --- Controls ---
-        telemetry.addLine("=== CONTROLS ===");
-        telemetry.addData("A / Shoot", "Auto-aim to goal tag");
-        telemetry.addData("Shoot+Aim", "LB/RB/RT");
-        telemetry.addData("LT", "Transit (no aim)");
-
+        // --- Vision Robot Pose (when seeing goal tag 20 or 24) ---
+        if (isGoalTag) {
+            Pose3D visionPose = robot.vision.getRobotPose();
+            double distance = robot.vision.getDistanceToTag();
+            
+            telemetry.addLine("=== VISION POSE ===");
+            if (visionPose != null) {
+                // Pose3D position is in meters, convert to inches
+                double visionX = visionPose.getPosition().x * 39.3701;
+                double visionY = visionPose.getPosition().y * 39.3701;
+                double visionHeading = visionPose.getOrientation().getYaw(AngleUnit.DEGREES);
+                
+                telemetry.addData("Vision X", String.format("%.2f in", visionX));
+                telemetry.addData("Vision Y", String.format("%.2f in", visionY));
+                telemetry.addData("Vision Heading", String.format("%.1f deg", visionHeading));
+                telemetry.addData("Distance to Tag", String.format("%.2f in", distance));
+            } else {
+                telemetry.addData("Vision Pose", "NULL (tag detected but no pose)");
+            }
+        }
+        
+        // --- Adaptive Shooting ---
+        if (isGoalTag && robot.drive.hasAbsolutePosition()) {
+            telemetry.addLine("=== ADAPTIVE SHOOTING ===");
+            
+            double distToGoal = robot.drive.distanceToGoal(currentTagId);
+            double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(currentTagId);
+            double tx = robot.vision.getTx();
+            boolean canFire = robot.drive.isAutoFireAllowed(tx);
+            
+            telemetry.addData("Distance to Goal", String.format("%.2f in", distToGoal));
+            telemetry.addData("Adaptive Velocity", String.format("%.0f TPS", adaptiveVelocity));
+            telemetry.addData("tx", String.format("%.2f°", tx));
+            telemetry.addData("CAN FIRE", canFire ? "YES (|tx| < 0.3°)" : "NO (align first)");
+        }
+        
+        // --- Shooter Status ---
+        telemetry.addLine("=== SHOOTER ===");
         telemetry.addData("READY TO SHOOT", robot.shooter.isShooterAtSetPoint());
         telemetry.addData("SHOOTER STATE", robot.shooter.shooterState);
+        telemetry.addData("Current Velocity", String.format("%.0f TPS", robot.shooter.getVelocity()));
         
         telemetry.update();
 

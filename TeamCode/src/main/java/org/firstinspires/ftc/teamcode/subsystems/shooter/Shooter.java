@@ -85,6 +85,46 @@ public class Shooter extends SubsystemBase {
      */
     public void setShooterState(ShooterState shooterState) {
         this.shooterState = shooterState;
+        this.adaptiveVelocity = 0;  // Clear adaptive velocity when using state
+        this.adaptiveServoPosition = -1;  // Clear adaptive servo position when using state
+    }
+    
+    // Adaptive velocity for auto-fire (0 means use state velocity)
+    private double adaptiveVelocity = 0;
+    
+    /**
+     * Sets an adaptive velocity for auto-fire.
+     * This takes priority over the state velocity.
+     * @param velocity Target velocity in TPS (negative value)
+     */
+    public void setAdaptiveVelocity(double velocity) {
+        this.adaptiveVelocity = velocity;
+    }
+    
+    /**
+     * Gets the current adaptive velocity setting.
+     */
+    public double getAdaptiveVelocity() {
+        return adaptiveVelocity;
+    }
+    
+    // Adaptive servo position for auto-fire (-1 means use state servo position)
+    private double adaptiveServoPosition = -1;
+    
+    /**
+     * Sets an adaptive servo position for auto-fire.
+     * This takes priority over the state servo position.
+     * @param position Servo position (0-1), or -1 to use state position
+     */
+    public void setAdaptiveServoPosition(double position) {
+        this.adaptiveServoPosition = position;
+    }
+    
+    /**
+     * Gets the current adaptive servo position setting.
+     */
+    public double getAdaptiveServoPosition() {
+        return adaptiveServoPosition;
     }
 
     /**
@@ -105,18 +145,24 @@ public class Shooter extends SubsystemBase {
 
     /**
      * Checks if the shooter has reached its target velocity.
+     * Considers adaptiveVelocity if set.
      * @return True if at or above (more negative) target speed.
      */
     public boolean isShooterAtSetPoint() {
-        // Since velocity is negative, we check if current velocity is less than or equal to target velocity 
-        // (meaning magnitude is greater than or equal to target magnitude)
-//        return rightShooter.getVelocity() <= shooterState.shooterVelocity;
+        // Determine target velocity: use adaptive if set, otherwise use state velocity
+        double targetVel = (adaptiveVelocity != 0) ? adaptiveVelocity : shooterState.shooterVelocity;
+        
+        // If using state velocity and state is STOP, return false
+        if (adaptiveVelocity == 0 && shooterState == ShooterState.STOP) {
+            return false;
+        }
+        
+        // Check if current velocity is close to target velocity
         return Util.epsilonEqual(
                 rightShooter.getVelocity(),
-                shooterState.shooterVelocity,
+                targetVel,
                 ShooterConstants.shooterEpsilon
-        ) &&
-                shooterState != ShooterState.STOP;
+        );
     }
 
     /**
@@ -208,27 +254,30 @@ public class Shooter extends SubsystemBase {
     /**
      * Periodic update method.
      * Implements Bang-Bang control with Feedforward for velocity regulation.
+     * STOP state uses open-loop idle power (no PID).
      */
     @Override
     public void periodic() {
         // Control loop runs always (even in STOP state) to maintain idle speed if set
         double currentVel = rightShooter.getVelocity();
-        double targetVel = shooterState.shooterVelocity;
+        
+        // Use adaptive velocity if set, otherwise use state velocity
+        double targetVel = (adaptiveVelocity != 0) ? adaptiveVelocity : shooterState.shooterVelocity;
         double power;
 
         // =================================================================
         // Auto Brake Logic
         // Triggered when shoot button (LB/RB/RT) is released.
-        // Brake stays engaged until speed drops to stopVelocity (-600 TPS).
+        // Brake stays engaged until speed drops below brakeReleaseThresholdTPS (-680 TPS).
         // Once reached, brake is released and cycle ends.
         // Skip auto logic if manual override is active.
         // =================================================================
         if (!manualBrakeOverride && autoBrakeCycleActive) {
-            // Check if speed has dropped to stopVelocity or slower
-            // Velocities are negative: -600 is stopVelocity
-            // currentVel >= stopVelocity means we've slowed down enough (e.g., -500 >= -600)
-            if (currentVel >= ShooterConstants.stopVelocity) {
-                // Speed has dropped to default, end brake cycle
+            // Check if speed has dropped below threshold
+            // Velocities are negative: -680 is threshold
+            // currentVel >= threshold means we've slowed down enough (e.g., -500 >= -680)
+            if (currentVel >= ShooterConstants.brakeReleaseThresholdTPS) {
+                // Speed has dropped below threshold, end brake cycle
                 autoBrakeCycleActive = false;
                 releaseBrake();
             } else {
@@ -240,20 +289,28 @@ public class Shooter extends SubsystemBase {
         }
         // If manualBrakeOverride is true, brake state is controlled manually
 
-        // Bang-Bang Control with Simple Feedforward Logic
-        // Note: Velocities are negative (e.g., Target: -1500)
-        // currentVel > targetVel (e.g. -1000 > -1500) means we are SLOWER (less negative magnitude) -> Need MAX power to accelerate
-        // currentVel <= targetVel (e.g. -2000 <= -1500) means we are FASTER (more negative magnitude) -> Need FEEDFORWARD power to maintain
-        
-        if (currentVel > targetVel) {
-            // Too slow, apply max power to accelerate
-            power = 1.0;
+        // =================================================================
+        // Motor Power Control
+        // STOP state (without adaptive velocity): Open-loop idle power (0.27), no PID control
+        // Other states or adaptive velocity: Bang-Bang control with feedforward
+        // =================================================================
+        if (shooterState == ShooterState.STOP && adaptiveVelocity == 0) {
+            // Idle mode: Use fixed open-loop power, no closed-loop control
+            power = ShooterConstants.idlePower;
         } else {
-            // Too fast or at speed, reduce power to feedforward value to maintain speed
-            // Estimate based on GoBilda 5203-2402-0001 (6000RPM)
-            // Max TPS = (6000 / 60) * 28 = 2800 TPS
-            // Ratio = |target| / 2800.0
-            power = Math.abs(targetVel) / ShooterConstants.maxVelocityTPS;
+            // Bang-Bang Control with Simple Feedforward Logic
+            // Note: Velocities are negative (e.g., Target: -1500)
+            // currentVel > targetVel (e.g. -1000 > -1500) means we are SLOWER -> Need MAX power to accelerate
+            // currentVel <= targetVel (e.g. -2000 <= -1500) means we are FASTER -> Need FEEDFORWARD power to maintain
+            
+            if (currentVel > targetVel) {
+                // Too slow, apply max power to accelerate
+                power = 1.0;
+            } else {
+                // Too fast or at speed, reduce power to feedforward value to maintain speed
+                // Ratio = |target| / maxVelocityTPS
+                power = Math.abs(targetVel) / ShooterConstants.maxVelocityTPS;
+            }
         }
 
         // Apply power
@@ -262,18 +319,10 @@ public class Shooter extends SubsystemBase {
         rightShooter.setPower(-power);
 
         // Update Servo Position
-        shooterServo.setPosition(shooterState.shooterServoPos);
-
-        // Update Ready Flag
-//        readyToShoot = isShooterAtSetPoint();
-//        else if (rightShooter.getVelocity() > releaseVelocity) {
-//            // Reset ready flag if speed drops significantly (closer to 0 than releaseVelocity)
-//            readyToShoot = false;
-//        }
+        // Use adaptive servo position if set, otherwise use state servo position
+        double servoPos = (adaptiveServoPosition >= 0) ? adaptiveServoPosition : shooterState.shooterServoPos;
+        shooterServo.setPosition(servoPos);
 
         // Telemetry handled centrally
-        // packet.put("rightShooterVelocity", rightShooter.getVelocity());
-        // FtcDashboard.getInstance().sendTelemetryPacket(packet);
-
     }
 }

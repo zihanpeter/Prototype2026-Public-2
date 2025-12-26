@@ -43,6 +43,21 @@ public class TeleOpDriveCommand extends CommandBase {
 
     @Override
     public void execute() {
+        // ==================== ABSOLUTE POSITION UPDATE ====================
+        // Update absolute field coordinates every frame
+        // If goal tag is visible: update from Vision
+        // Otherwise: update from odometry dead-reckoning
+        int tagId = vision.getDetectedTagId();
+        boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
+        
+        if (isGoalTag) {
+            // Vision update - real-time when seeing goal tag
+            drive.updateAbsolutePositionFromVision(vision);
+        } else {
+            // Odometry dead-reckoning when no goal tag
+            drive.updateAbsolutePositionFromOdometry();
+        }
+        
         if (!isAuto[0]) {
             // Get raw inputs
             double rawLeftX = gamepadEx.getLeftX();

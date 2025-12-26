@@ -8,6 +8,8 @@ import org.firstinspires.ftc.teamcode.commands.TransitCommand;
 import org.firstinspires.ftc.teamcode.opmodes.teleops.TeleOpConstants;
 import org.firstinspires.ftc.teamcode.subsystems.Robot;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
+import org.firstinspires.ftc.teamcode.subsystems.shooter.ShooterConstants;
+import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 import org.firstinspires.ftc.teamcode.utils.FunctionalButton;
 
 /**
@@ -108,6 +110,62 @@ public class DriverControls {
                 new InstantCommand(() -> robot.shooter.manualEngageBrake())
         ).whenReleased(
                 new InstantCommand(() -> robot.shooter.manualReleaseBrake())
+        );
+        
+        // ==================== ADAPTIVE FIRE (X = Blue Goal, B = Red Goal) ====================
+        // X Button: Calculate distance to BLUE goal (tag 20), set adaptive velocity/servo, fire
+        // B Button: Calculate distance to RED goal (tag 24), set adaptive velocity/servo, fire
+        
+        // X Button - BLUE Goal
+        new FunctionalButton(
+                () -> gamepad.getButton(GamepadKeys.Button.X)
+        ).whenHeld(
+                new InstantCommand(() -> {
+                    robot.shooter.cancelAutoBrakeCycle();  // Cancel brake
+                    // Calculate adaptive velocity and servo position based on distance to BLUE goal
+                    double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.BLUE_GOAL_TAG_ID);
+                    double adaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.BLUE_GOAL_TAG_ID);
+                    robot.shooter.setAdaptiveVelocity(adaptiveVelocity);
+                    robot.shooter.setAdaptiveServoPosition(adaptiveServoPos);
+                })
+        ).whenReleased(
+                new InstantCommand(() -> {
+                    robot.shooter.setShooterState(Shooter.ShooterState.STOP);
+                    robot.shooter.startAutoBrakeCycle();  // Start brake when releasing
+                })
+        );
+        
+        // Fire when X is held
+        new FunctionalButton(
+                () -> gamepad.getButton(GamepadKeys.Button.X)
+        ).whenHeld(
+                new TransitCommand(robot.transit, robot.shooter)
+        );
+        
+        // B Button - RED Goal
+        new FunctionalButton(
+                () -> gamepad.getButton(GamepadKeys.Button.B)
+        ).whenHeld(
+                new InstantCommand(() -> {
+                    robot.shooter.cancelAutoBrakeCycle();  // Cancel brake
+                    // Calculate adaptive velocity and servo position based on distance to RED goal
+                    double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.RED_GOAL_TAG_ID);
+                    double adaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.RED_GOAL_TAG_ID);
+                    robot.shooter.setAdaptiveVelocity(adaptiveVelocity);
+                    robot.shooter.setAdaptiveServoPosition(adaptiveServoPos);
+                })
+        ).whenReleased(
+                new InstantCommand(() -> {
+                    robot.shooter.setShooterState(Shooter.ShooterState.STOP);
+                    robot.shooter.startAutoBrakeCycle();  // Start brake when releasing
+                })
+        );
+        
+        // Fire when B is held
+        new FunctionalButton(
+                () -> gamepad.getButton(GamepadKeys.Button.B)
+        ).whenHeld(
+                new TransitCommand(robot.transit, robot.shooter)
         );
     }
 }

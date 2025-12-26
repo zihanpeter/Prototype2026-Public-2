@@ -24,7 +24,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  *   newY = oldY
  *   newHeading = 180° - oldHeading
  */
-@Autonomous(name = "Red Near Multi-Gate", group = "Red")
+@Autonomous(name = "Red Near Multi-Gate", group = "Near")
 public class RedNearMultiGate extends AutoCommandBase {
 
     // Path chains (11 paths - added parking)

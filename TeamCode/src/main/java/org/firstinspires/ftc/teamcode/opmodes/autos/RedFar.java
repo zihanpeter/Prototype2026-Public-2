@@ -10,6 +10,7 @@ import com.arcrobotics.ftclib.command.RepeatCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 
 import org.firstinspires.ftc.teamcode.commands.TransitCommand;
+import org.firstinspires.ftc.teamcode.commands.autocommands.AutoAlignCommand;
 import org.firstinspires.ftc.teamcode.commands.autocommands.AutoDriveCommand;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 
@@ -18,7 +19,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Mirrored from BlueFar (X=72 axis).
  * 6 paths (2 push cycles), all BezierLine (straight lines).
  */
-@Autonomous(name = "Red Far Auto", group = "Red")
+@Autonomous(name = "Red Far Auto", group = "Far")
 public class RedFar extends AutoCommandBase {
 
     // Path chains (5 paths - 1 push cycle per loop)
@@ -73,8 +74,8 @@ public class RedFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path5_toShootPose),
-                        new TransitCommand(transit, shooter).withTimeout(1300),
-                        new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP))
+                        new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
+                        new TransitCommand(transit, shooter) // Shoots 3 times then finishes
                 )
         );
 
@@ -92,8 +93,8 @@ public class RedFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new TransitCommand(transit, shooter).withTimeout(1300),
-                new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
+                new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
+                new TransitCommand(transit, shooter), // Shoots 3 times then finishes
 
                 // =========================================================
                 // 2-6. Infinite Loop: 往返2次 + 射击
