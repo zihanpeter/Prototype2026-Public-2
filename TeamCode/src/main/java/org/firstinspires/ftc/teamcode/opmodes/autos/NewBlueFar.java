@@ -81,7 +81,7 @@ public class NewBlueFar extends AutoCommandBase {
                             intake.setFastShooting(true);
                         }),
                         new AutoDriveCommand(follower, path7_toFinalShoot),
-                        new TransitCommand(transit, shooter) // Shoots 3 times then finishes
+                        new TransitCommand(transit, shooter).withTimeout(1300)
                 )
         );
 
@@ -101,7 +101,7 @@ public class NewBlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
-                new TransitCommand(transit, shooter),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // Path 2: Shoot -> Sample
                 new InstantCommand(() -> {
@@ -116,7 +116,7 @@ public class NewBlueFar extends AutoCommandBase {
                     intake.setFastShooting(true);
                 }),
                 new AutoDriveCommand(follower, path3_toShootPose),
-                new TransitCommand(transit, shooter),
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
                 // Phase 2: BlueFar loop (无限循环)

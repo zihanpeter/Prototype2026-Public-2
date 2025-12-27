@@ -35,10 +35,10 @@ public class BlueNear extends AutoCommandBase {
     private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
     private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
     private final Pose sample1Pose = new Pose(20.550, 83.817, Math.toRadians(180));
-    private final Pose intermediatePose = new Pose(15.803, 76.434, Math.toRadians(90));
-    private final Pose shootPose2 = new Pose(35.376, 111.706, Math.toRadians(135));
+    private final Pose intermediatePose = new Pose(14, 76.434, Math.toRadians(90));
+    private final Pose shootPose2 = new Pose(30.376, 111.706, Math.toRadians(135));
     private final Pose sample2Pose = new Pose(20.550, 59.743, Math.toRadians(180));
-    private final Pose shootPose3 = new Pose(35.376, 111.853, Math.toRadians(135));
+    private final Pose shootPose3 = new Pose(30.376, 111.853, Math.toRadians(135));
     private final Pose sample3Pose = new Pose(16.120, 35.587, Math.toRadians(180));
     private final Pose parkingPose = new Pose(18.060, 95.946, Math.toRadians(180));
 
@@ -82,7 +82,9 @@ public class BlueNear extends AutoCommandBase {
                 // 4. Path 4: Intermediate -> Shoot Pose 2 (BezierLine)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.8 power during approach
                 new AutoDriveCommand(follower, path4_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -95,7 +97,9 @@ public class BlueNear extends AutoCommandBase {
                 // 6. Path 6: Sample 2 -> Shoot Pose 3 (BezierCurve)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.8 power during approach
                 new AutoDriveCommand(follower, path6_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -108,7 +112,9 @@ public class BlueNear extends AutoCommandBase {
                 // 8. Path 8: Sample 3 -> Shoot Pose 3 (BezierCurve, Final)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.8 power during approach
                 new AutoDriveCommand(follower, path8_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================

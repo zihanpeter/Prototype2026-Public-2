@@ -37,21 +37,21 @@ public class RedNear extends AutoCommandBase {
     private PathChain path8_toShootPose;
     private PathChain path9_toParking;
 
-    // Poses mirrored from Blue (X=72 axis)
+    // Poses mirrored from BlueNear (X=72 axis): RedX = 144 - BlueX, RedHeading = 180° - BlueHeading
     // Blue: (25.509, 129.474, 144°) → Red: (118.491, 129.474, 36°)
     private final Pose startPose = new Pose(118.491, 129.474, Math.toRadians(36));
-    // Blue: (35.229, 112, 135°) → Red: (108.771, 112, 45°)
+    // Blue: (35.229, 112.0, 135°) → Red: (108.771, 112.0, 45°)
     private final Pose shootPose1 = new Pose(108.771, 112.0, Math.toRadians(45));
     // Blue: (20.550, 83.817, 180°) → Red: (123.450, 83.817, 0°)
     private final Pose sample1Pose = new Pose(123.450, 83.817, Math.toRadians(0));
-    // Blue: (15.803, 76.434, 90°) → Red: (128.197, 76.434, 90°)
-    private final Pose intermediatePose = new Pose(128.197, 76.434, Math.toRadians(90));
-    // Blue: (35.376, 111.706, 135°) → Red: (108.624, 111.706, 45°)
-    private final Pose shootPose2 = new Pose(108.624, 111.706, Math.toRadians(45));
+    // Blue: (14, 76.434, 90°) → Red: (130, 76.434, 90°)
+    private final Pose intermediatePose = new Pose(130, 76.434, Math.toRadians(90));
+    // Blue: (30.376, 111.706, 135°) → Red: (113.624, 111.706, 45°)
+    private final Pose shootPose2 = new Pose(113.624, 111.706, Math.toRadians(45));
     // Blue: (20.550, 59.743, 180°) → Red: (123.450, 59.743, 0°)
     private final Pose sample2Pose = new Pose(123.450, 59.743, Math.toRadians(0));
-    // Blue: (35.376, 111.853, 135°) → Red: (108.624, 111.853, 45°)
-    private final Pose shootPose3 = new Pose(108.624, 111.853, Math.toRadians(45));
+    // Blue: (30.376, 111.853, 135°) → Red: (113.624, 111.853, 45°)
+    private final Pose shootPose3 = new Pose(113.624, 111.853, Math.toRadians(45));
     // Blue: (16.120, 35.587, 180°) → Red: (127.880, 35.587, 0°)
     private final Pose sample3Pose = new Pose(127.880, 35.587, Math.toRadians(0));
     // Blue: (18.060, 95.946, 180°) → Red: (125.940, 95.946, 0°)
@@ -97,7 +97,9 @@ public class RedNear extends AutoCommandBase {
                 // 4. Path 4: Intermediate -> Shoot Pose 2 (BezierLine)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.75 power during approach
                 new AutoDriveCommand(follower, path4_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -110,7 +112,9 @@ public class RedNear extends AutoCommandBase {
                 // 6. Path 6: Sample 2 -> Shoot Pose 3 (BezierCurve)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.75 power during approach
                 new AutoDriveCommand(follower, path6_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
@@ -123,7 +127,9 @@ public class RedNear extends AutoCommandBase {
                 // 8. Path 8: Sample 3 -> Shoot Pose 3 (BezierCurve, Final)
                 // =========================================================
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.SLOW)),
+                new InstantCommand(() -> intake.setFastShooting(true)),  // 0.75 power during approach
                 new AutoDriveCommand(follower, path8_toShootPose),
+                new InstantCommand(() -> intake.setFastShooting(false)), // Back to normal
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================

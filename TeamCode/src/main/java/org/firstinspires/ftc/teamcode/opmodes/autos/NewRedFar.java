@@ -84,7 +84,7 @@ public class NewRedFar extends AutoCommandBase {
                         }),
                         new AutoDriveCommand(follower, path7_toFinalShoot),
                         new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                        new TransitCommand(transit, shooter) // Shoots 3 times then finishes
+                        new TransitCommand(transit, shooter).withTimeout(1300)
                 )
         );
 
@@ -105,7 +105,7 @@ public class NewRedFar extends AutoCommandBase {
                 }),
                 new AutoDriveCommand(follower, path1_toShootPose),
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                new TransitCommand(transit, shooter), // 射球 3 次
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // Path 2: Shoot -> Sample (曲线取球)
                 new InstantCommand(() -> {
@@ -121,7 +121,7 @@ public class NewRedFar extends AutoCommandBase {
                 }),
                 new AutoDriveCommand(follower, path3_toShootPose),
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
-                new TransitCommand(transit, shooter), // 射球 3 次
+                new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
                 // Phase 2: RedFar loop (无限循环)

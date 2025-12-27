@@ -68,9 +68,14 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     public static double farDistanceThreshold = 94;  // Distance threshold for offset (inches)
     public static double farOffsetDegrees = 2.0;        // Offset in degrees for far shots
     
-    // Cached offset to prevent jitter
+    // Cached offset to prevent jitter (Mode 1: tx-based)
     private double currentOffset = 0;
     private boolean offsetLocked = false;
+    
+    // Locked target goal for heading-based alignment (Mode 2: no tag visible)
+    private boolean headingTargetLocked = false;
+    private double lockedTargetGoalX = 0;
+    private double lockedTargetGoalY = 0;
 
     /**
      * Constructor for MecanumDrivePinpoint.
@@ -188,12 +193,13 @@ public class MecanumDrivePinpoint extends SubsystemBase {
      */
     public void moveRobotFieldRelative(double forward, double fun, double turn) {
         // Apply deadband only to joystick inputs (forward/strafe), not turn
-        // This allows auto-aim small turn values to work
+        // This allows auto-aim small turn values to work for fine adjustments
         if (Math.abs(forward) < DriveConstants.deadband) forward = 0;
         if (Math.abs(fun) < DriveConstants.deadband) fun = 0;
+        // Note: No deadband on turn to allow auto-aim fine adjustments
         
         // If all inputs are zero, stop
-        if (forward == 0 && fun == 0 && Math.abs(turn) < DriveConstants.deadband) {
+        if (forward == 0 && fun == 0 && turn == 0) {
             stop();
             return;
         }
@@ -396,13 +402,13 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     }
     
     /**
-     * Gets the turn power for auto-aim using Limelight's tx value.
-     * Uses full PID control (like Prototype2026-Public).
+     * Gets the turn power for auto-aim.
      * 
-     * Includes distance-based offset compensation:
-     * - If distance > farDistanceThreshold inches:
-     *   - Blue goal (tag 20): offset left by farOffsetDegrees
-     *   - Red goal (tag 24): offset right by farOffsetDegrees
+     * Mode 1: If seeing goal tag (20/24), use Limelight's tx value for precise alignment.
+     * Mode 2: If NOT seeing goal tag but has absolute position, calculate heading to nearest goal
+     *         and turn towards it (robot back facing goal).
+     * 
+     * Includes distance-based offset compensation for Mode 1.
      * 
      * @param vision The Vision subsystem.
      * @return Turn power (-1 to 1). Positive = turn right, Negative = turn left.
@@ -411,59 +417,80 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         int tagId = vision.getDetectedTagId();
         boolean isGoalTag = (tagId == Vision.BLUE_GOAL_TAG_ID || tagId == Vision.RED_GOAL_TAG_ID);
         
-        if (!isGoalTag) {
-            // Reset offset lock and PID when not seeing goal tag
-            offsetLocked = false;
-            currentOffset = 0;
-            alignPID.reset();
-            return 0;
-        }
-        
-        // Record which tag we're aligning to
-        lastAlignedTagId = tagId;
-        hasLastAlignedTag = true;
-        
         // Update PID coefficients in case they were changed via Dashboard
         alignPID.setPID(kP_alignH, kI_alignH, kD_alignH);
         
-        // Get tx value (horizontal offset in degrees)
-        double tx = vision.getTx();
-        
-        // Distance-based offset compensation
-        // Lock the offset once determined to prevent jitter
-        if (!offsetLocked) {
-            double distance = vision.getDistanceToTag();
+        if (isGoalTag) {
+            // ==================== MODE 1: TX-BASED ALIGNMENT ====================
+            // Record which tag we're aligning to
+            lastAlignedTagId = tagId;
+            hasLastAlignedTag = true;
             
-            if (distance > 0 && distance > farDistanceThreshold) {
-                // Far shot: apply offset
-                if (tagId == Vision.BLUE_GOAL_TAG_ID) {
-                    currentOffset = -farOffsetDegrees;  // Blue goal: offset left
+            // Get tx value (horizontal offset in degrees)
+            double tx = vision.getTx();
+            
+            // Distance-based offset compensation
+            // Lock the offset once determined to prevent jitter
+            if (!offsetLocked) {
+                double distance = vision.getDistanceToTag();
+                
+                if (distance > 0 && distance > farDistanceThreshold) {
+                    // Far shot: apply offset
+                    if (tagId == Vision.BLUE_GOAL_TAG_ID) {
+                        currentOffset = -farOffsetDegrees;  // Blue goal: offset left
+                    } else {
+                        currentOffset = farOffsetDegrees;   // Red goal: offset right
+                    }
                 } else {
-                    currentOffset = farOffsetDegrees;   // Red goal: offset right
+                    currentOffset = 0;  // Close shot: no offset
                 }
-            } else {
-                currentOffset = 0;  // Close shot: no offset
+                offsetLocked = true;  // Lock to prevent jitter
             }
-            offsetLocked = true;  // Lock to prevent jitter
+            
+            // PID control to align tx to target offset
+            double turn = -alignPID.calculate(tx, -currentOffset);
+            return Math.max(-1, Math.min(1, turn));
+            
+        } else {
+            // No goal tag visible, reset and return 0
+            offsetLocked = false;
+            currentOffset = 0;
+            headingTargetLocked = false;
+            alignPID.reset();
+            return 0;
         }
-        
-        // Target is to get tx to equal -currentOffset (so tx + offset = 0)
-        // PID: calculate(current, setpoint) returns value to move current toward setpoint
-        // We need to negate because:
-        // - tx > 0 means target is to the right, we need to turn right (positive turn)
-        // - But PID outputs negative when current > setpoint
-        double turn = -alignPID.calculate(tx, -currentOffset);
-        
-        return Math.max(-1, Math.min(1, turn));
     }
     
     /**
-     * Resets the auto-aim offset lock and PID.
+     * Calculates the heading (in radians) from robot's absolute position to a goal.
+     * Returns the heading where robot's BACK faces the goal (for shooting).
+     * 
+     * @param goalX Goal X coordinate
+     * @param goalY Goal Y coordinate
+     * @return Target heading in radians
+     */
+    private double calculateHeadingToGoal(double goalX, double goalY) {
+        double dx = goalX - absoluteX;
+        double dy = goalY - absoluteY;
+        // atan2 gives angle from robot to goal
+        // Subtract PI because we want robot's BACK to face the goal
+        return Math.atan2(dy, dx) - Math.PI;
+    }
+    
+    /**
+     * Resets the auto-aim offset lock, heading target lock, and PID.
      * Call this when releasing the aim button.
      */
     public void resetAutoAimOffset() {
+        // Reset tx-based offset lock (Mode 1)
         offsetLocked = false;
         currentOffset = 0;
+        
+        // Reset heading-based target lock (Mode 2)
+        headingTargetLocked = false;
+        lockedTargetGoalX = 0;
+        lockedTargetGoalY = 0;
+        
         alignPID.reset();
     }
     

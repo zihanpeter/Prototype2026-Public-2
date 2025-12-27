@@ -37,7 +37,7 @@ public class BlueNearCustom extends AutoCommandBase {
     private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
     private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
     private final Pose sample1Pose = new Pose(20.318, 84.175, Math.toRadians(180));
-    private final Pose gatePose = new Pose(15.803, 76.434, Math.toRadians(90));
+    private final Pose gatePose = new Pose(14, 76.434, Math.toRadians(90));
     private final Pose shootPose2 = new Pose(35.315, 111.910, Math.toRadians(135));
     private final Pose sample2Pose = new Pose(21.769, 59.664, Math.toRadians(180));
     private final Pose sample3Pose = new Pose(21.447, 35.637, Math.toRadians(180));

@@ -78,9 +78,16 @@ public class DriverControls {
                 })
         );
 
-        // Transit Fire (Left Trigger > Threshold)
+        // Transit Fire (Left Trigger + Shoot Button)
+        // Only fires when BOTH left trigger AND a shoot button (LB/RB/RT) are pressed
         new FunctionalButton(
-                () -> gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= TeleOpConstants.transitFireTriggerThreshold
+                () -> {
+                    boolean leftTriggerPressed = gamepad.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= TeleOpConstants.transitFireTriggerThreshold;
+                    boolean shootButtonPressed = gamepad.getButton(GamepadKeys.Button.LEFT_BUMPER) ||
+                                                  gamepad.getButton(GamepadKeys.Button.RIGHT_BUMPER) ||
+                                                  gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= TeleOpConstants.slowShootTriggerThreshold;
+                    return leftTriggerPressed && shootButtonPressed;
+                }
         ).whenHeld(
                 new TransitCommand(robot.transit, robot.shooter)
         );
