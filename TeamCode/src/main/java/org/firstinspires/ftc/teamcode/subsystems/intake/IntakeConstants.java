@@ -12,8 +12,8 @@ public class IntakeConstants {
 
     // Power levels
     public static double intakePower = 0.5;       // Standard running power
-    public static double fullPower = 0.7;         // Maximum power for fast intake
-    public static double fastShootingPower = 0.75; // Power during approach to shoot pose in auto
+    public static double fullPower = 0.65;        // Power for intake during path2 and path5
+    public static double fastShootingPower = 0.8; // Power during approach to shoot pose in auto
     public static double transitPower = 1;        // Power when transferring/shooting
 
     /**
