@@ -37,15 +37,15 @@ public class NewRedFar extends AutoCommandBase {
 
     // Poses mirrored from Blue (X=72 axis: newX = 144 - oldX, newHeading = 180 - oldHeading) - updated
     private final Pose startPose = new Pose(144 - 55.269, 7.953, Math.toRadians(180 - 90));
-    private final Pose shootPose1 = new Pose(144 - 58.716, 11.890, Math.toRadians(180 - 114));
+    private final Pose shootPose1 = new Pose(144 - 61, 11.890, Math.toRadians(180 - 112.5));
     private final Pose samplePose = new Pose(144 - 13.707, 34.186, Math.toRadians(180 - 180)); // Updated
-    private final Pose shootPose2 = new Pose(144 - 59.019, 11.449, Math.toRadians(180 - 114));
+    private final Pose shootPose2 = new Pose(144 - 59.019, 11.449, Math.toRadians(180 - 112.5));
 
     // Poses from RedFar - Phase 2 (mirrored from BlueFar)
     private final Pose sample1Pose = new Pose(144 - 11.303, 10.569, Math.toRadians(180 - 180));
     private final Pose pushZone = new Pose(144 - 30.679, 10.569, Math.toRadians(180 - 180));
     private final Pose sample2Pose = new Pose(144 - 11.450, 10.569, Math.toRadians(180 - 180));
-    private final Pose finalShootPose = new Pose(144 - 58.716, 11.743, Math.toRadians(180 - 114));
+    private final Pose finalShootPose = new Pose(144 - 61, 11.743, Math.toRadians(180 - 112.5));
 
     // Control points for Path 2 (BezierCurve with 3 control points) - mirrored, updated
     private final Pose controlPoint1 = new Pose(144 - 64.824, 51.763, 0);
@@ -69,20 +69,20 @@ public class NewRedFar extends AutoCommandBase {
                             shooter.setShooterState(Shooter.ShooterState.STOP);
                             intake.setFastShooting(false);
                         }),
-                        new AutoDriveCommand(follower, path4_toSample1),
+                        new AutoDriveCommand(follower, path4_toSample1, 4000),
 
                         // Path 5: Sample 1 -> Push Zone
-                        new AutoDriveCommand(follower, path5_toPushZone),
+                        new AutoDriveCommand(follower, path5_toPushZone, 3000),
 
                         // Path 6: Push Zone -> Sample 2
-                        new AutoDriveCommand(follower, path6_toSample2),
+                        new AutoDriveCommand(follower, path6_toSample2, 3000),
 
                         // Path 7: Sample 2 -> Shoot
                         new InstantCommand(() -> {
                             shooter.setShooterState(Shooter.ShooterState.FAST);
                             intake.setFastShooting(true);
                         }),
-                        new AutoDriveCommand(follower, path7_toFinalShoot),
+                        new AutoDriveCommand(follower, path7_toFinalShoot, 4000),
                         new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                         new TransitCommand(transit, shooter).withTimeout(1300)
                 )
@@ -103,7 +103,7 @@ public class NewRedFar extends AutoCommandBase {
                     shooter.setShooterState(Shooter.ShooterState.FAST);
                     intake.setFastShooting(true);
                 }),
-                new AutoDriveCommand(follower, path1_toShootPose),
+                new AutoDriveCommand(follower, path1_toShootPose, 3000),
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
@@ -112,14 +112,14 @@ public class NewRedFar extends AutoCommandBase {
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                     intake.setFastShooting(false);
                 }),
-                new AutoDriveCommand(follower, path2_toSamplePose),
+                new AutoDriveCommand(follower, path2_toSamplePose, 5000),
 
                 // Path 3: Sample -> Shoot (返回射球)
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.FAST);
                     intake.setFastShooting(true);
                 }),
-                new AutoDriveCommand(follower, path3_toShootPose),
+                new AutoDriveCommand(follower, path3_toShootPose, 4000),
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
@@ -138,19 +138,19 @@ public class NewRedFar extends AutoCommandBase {
         // Path 1: Start -> Shoot Pose (BezierLine)
         path1_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, shootPose1))
-                .setLinearHeadingInterpolation(Math.toRadians(180 - 90), Math.toRadians(180 - 114))
+                .setLinearHeadingInterpolation(Math.toRadians(180 - 90), Math.toRadians(180 - 112.5))
                 .build();
 
         // Path 2: Shoot Pose -> Sample Pose (BezierCurve with 2 control points)
         path2_toSamplePose = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose1, controlPoint1, controlPoint2, controlPoint3, samplePose))
-                .setLinearHeadingInterpolation(Math.toRadians(180 - 114), Math.toRadians(180 - 180))
+                .setLinearHeadingInterpolation(Math.toRadians(180 - 112.5), Math.toRadians(180 - 180))
                 .build();
 
         // Path 3: Sample Pose -> Shoot Pose (BezierLine)
         path3_toShootPose = follower.pathBuilder()
                 .addPath(new BezierLine(samplePose, shootPose2))
-                .setLinearHeadingInterpolation(Math.toRadians(180 - 180), Math.toRadians(180 - 114))
+                .setLinearHeadingInterpolation(Math.toRadians(180 - 180), Math.toRadians(180 - 112.5))
                 .build();
 
         // =========================================================
@@ -160,7 +160,7 @@ public class NewRedFar extends AutoCommandBase {
         // Path 4: Shoot Pose -> Sample 1
         path4_toSample1 = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose2, sample1Pose))
-                .setLinearHeadingInterpolation(Math.toRadians(180 - 114), Math.toRadians(180 - 180))
+                .setLinearHeadingInterpolation(Math.toRadians(180 - 112.5), Math.toRadians(180 - 180))
                 .build();
 
         // Path 5: Sample 1 -> Push Zone
@@ -178,7 +178,7 @@ public class NewRedFar extends AutoCommandBase {
         // Path 7: Sample 2 -> Shoot Pose
         path7_toFinalShoot = follower.pathBuilder()
                 .addPath(new BezierLine(sample2Pose, finalShootPose))
-                .setLinearHeadingInterpolation(Math.toRadians(180 - 180), Math.toRadians(180 - 114))
+                .setLinearHeadingInterpolation(Math.toRadians(180 - 180), Math.toRadians(180 - 112.5))
                 .build();
     }
 }

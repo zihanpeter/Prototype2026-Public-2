@@ -33,15 +33,15 @@ public class BlueNearCustom extends AutoCommandBase {
     private PathChain path9_toShootPose;
     private PathChain path10_toParking;
 
-    // Poses from JSON (updated - gate heading changed to 90°)
+    // Poses from BlueNear (gate heading 90°)
     private final Pose startPose = new Pose(25.509, 129.474, Math.toRadians(144));
     private final Pose shootPose1 = new Pose(35.229, 112.0, Math.toRadians(135));
-    private final Pose sample1Pose = new Pose(20.318, 84.175, Math.toRadians(180));
+    private final Pose sample1Pose = new Pose(20.550, 83.817, Math.toRadians(180));
     private final Pose gatePose = new Pose(14, 76.434, Math.toRadians(90));
-    private final Pose shootPose2 = new Pose(35.315, 111.910, Math.toRadians(135));
-    private final Pose sample2Pose = new Pose(21.769, 59.664, Math.toRadians(180));
-    private final Pose sample3Pose = new Pose(21.447, 35.637, Math.toRadians(180));
-    private final Pose shootPose3 = new Pose(35.476, 111.910, Math.toRadians(135));
+    private final Pose shootPose2 = new Pose(30.376, 111.706, Math.toRadians(135));
+    private final Pose sample2Pose = new Pose(20.550, 59.743, Math.toRadians(180));
+    private final Pose sample3Pose = new Pose(16.120, 35.587, Math.toRadians(180));
+    private final Pose shootPose3 = new Pose(30.376, 111.853, Math.toRadians(135));
     private final Pose parkingPose = new Pose(18.060, 95.946, Math.toRadians(180));
 
     @Override
@@ -143,13 +143,12 @@ public class BlueNearCustom extends AutoCommandBase {
                 .setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(135))
                 .build();
 
-        // Path 2: Shoot Pose 1 -> Sample 1 (BezierCurve, 2 control points)
+        // Path 2: Shoot Pose 1 -> Sample 1 (BezierCurve, 1 control point from BlueNear)
         // startDeg=135 -> endDeg=180
         path2_toSample1 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         shootPose1,
-                        new Pose(59.180, 112.394, 0),
-                        new Pose(75.628, 77.080, 0),
+                        new Pose(81.664, 80.936, 0),
                         sample1Pose
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
@@ -173,61 +172,65 @@ public class BlueNearCustom extends AutoCommandBase {
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
-        // Path 5: Shoot Pose 2 -> Sample 2 (BezierCurve, 3 control points)
+        // Path 5: Shoot Pose 2 -> Sample 2 (BezierCurve, 3 control points from BlueNear)
         // startDeg=135 -> endDeg=180
         path5_toSample2 = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         shootPose2,
-                        new Pose(53.859, 114.813, 0),
-                        new Pose(70.952, 82.562, 0),
-                        new Pose(58.213, 53.536, 0),
+                        new Pose(46.972, 106.862, 0),
+                        new Pose(76.330, 85.725, 0),
+                        new Pose(69.138, 53.431, 0),
                         sample2Pose
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
-        // Path 6: Sample 2 -> Gate (BezierCurve, 1 control point)
+        // Path 6: Sample 2 -> Gate (BezierCurve, 1 control point from BlueNear path6)
         // startDeg=180 -> endDeg=90
         path6_toGate = follower.pathBuilder()
                 .addPath(new BezierCurve(
                         sample2Pose,
-                        new Pose(44.184, 70.146, 0),
+                        new Pose(55.046, 59.743, 0),
                         gatePose
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
                 .build();
 
-        // Path 7: Gate -> Shoot Pose 2 (BezierLine)
+        // Path 7: Gate -> Shoot Pose 3 (BezierLine)
         // startDeg=90 -> endDeg=135
         path7_toShootPose = follower.pathBuilder()
-                .addPath(new BezierLine(gatePose, shootPose2))
+                .addPath(new BezierLine(gatePose, shootPose3))
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(135))
                 .build();
 
-        // Path 8: Shoot Pose 2 -> Sample 3 (BezierCurve, 3 control points)
+        // Path 8: Shoot Pose 3 -> Sample 3 (BezierCurve, 3 control points from BlueNear path7)
         // startDeg=135 -> endDeg=180
         path8_toSample3 = follower.pathBuilder()
                 .addPath(new BezierCurve(
-                        shootPose2,
-                        new Pose(85.787, 107.395, 0),
-                        new Pose(44.022, 53.375, 0),
-                        new Pose(66.759, 31.283, 0),
+                        shootPose3,
+                        new Pose(50.789, 103.193, 0),
+                        new Pose(66.495, 31.413, 0),
+                        new Pose(71.927, 33.321, 0),
                         sample3Pose
                 ))
                 .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
 
-        // Path 9: Sample 3 -> Shoot Pose 1 (BezierLine, direct)
+        // Path 9: Sample 3 -> Shoot Pose 3 (BezierCurve, 1 control point from BlueNear path8)
         // startDeg=180 -> endDeg=135
         path9_toShootPose = follower.pathBuilder()
-                .addPath(new BezierLine(sample3Pose, shootPose1))
+                .addPath(new BezierCurve(
+                        sample3Pose,
+                        new Pose(50.642, 81.028, 0),
+                        shootPose3
+                ))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
                 .build();
 
-        // Path 10: Shoot Pose 1 -> Parking (BezierLine)
+        // Path 10: Shoot Pose 3 -> Parking (BezierLine, from BlueNear path9)
         // startDeg=135 -> endDeg=180
         path10_toParking = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose1, parkingPose))
+                .addPath(new BezierLine(shootPose3, parkingPose))
                 .setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
                 .build();
     }

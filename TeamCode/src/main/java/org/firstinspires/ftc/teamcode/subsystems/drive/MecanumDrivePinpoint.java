@@ -60,7 +60,7 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     private final PIDController alignPID;
     
     // Auto-aim PID constants (tunable via Dashboard)
-    public static double kP_alignH = 0.018;      // P gain for auto-aim (reduced to prevent overshoot)
+    public static double kP_alignH = 0.03;       // P gain for auto-aim
     public static double kI_alignH = 0;          // I gain for auto-aim
     public static double kD_alignH = 0.003;      // D gain for auto-aim (slightly increased for damping)
     
@@ -782,12 +782,16 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     
     /**
      * Checks if auto-fire is allowed (aligned within threshold).
+     * Takes into account the current offset for far shots.
      * 
      * @param tx The horizontal offset in degrees from Vision
-     * @return true if |tx| < autoFireTxThreshold
+     * @return true if aligned within autoFireTxThreshold of target
      */
     public boolean isAutoFireAllowed(double tx) {
-        return Math.abs(tx) < ShooterConstants.autoFireTxThreshold;
+        // Target tx is -currentOffset (same as what PID is aiming for)
+        double targetTx = -currentOffset;
+        double error = Math.abs(tx - targetTx);
+        return error < ShooterConstants.autoFireTxThreshold;
     }
     
     @Override

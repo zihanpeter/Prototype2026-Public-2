@@ -38,7 +38,7 @@ public class ShooterConstants {
     public static double brakeReleaseThresholdTPS = -680;
     
     public static double stopVelocity = -600;  // Legacy, used for reference only
-    public static double fastVelocity = -1440; // Updated for 6000RPM motor (~75% power)
+    public static double fastVelocity = -1420; // Updated for 6000RPM motor (~75% power)
     public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
     public static double slowVelocity = -900;  // Low speed for close/safe shots (~21% power)
     public static double releaseVelocity = -200; // Threshold to consider "stopped" or "too slow"
@@ -91,5 +91,5 @@ public class ShooterConstants {
     public static double servoFarDistance = 134;   // Distance for shooterServoUpPos (0.29)
     
     // Auto-fire threshold (degrees)
-    public static double autoFireTxThreshold = 4.0;  // Allow fire when |tx| < this
+    public static double autoFireTxThreshold = 1.0;  // Allow fire when |tx| < this
 }

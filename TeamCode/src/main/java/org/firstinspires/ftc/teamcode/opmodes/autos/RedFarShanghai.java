@@ -37,9 +37,9 @@ public class RedFarShanghai extends AutoCommandBase {
 
     // Mirrored Poses (X mirrored, heading mirrored)
     private final Pose startPose = mirrorPose(new Pose(55.27, 7.95, Math.toRadians(90)));
-    private final Pose shootPose1 = mirrorPose(new Pose(58.72, 11.89, Math.toRadians(114)));
+    private final Pose shootPose1 = mirrorPose(new Pose(58.72, 11.89, Math.toRadians(112.5)));
     private final Pose intakePose = mirrorPose(new Pose(13.71, 34.19, Math.toRadians(180)));
-    private final Pose shootPose2 = mirrorPose(new Pose(58.72, 11.89, Math.toRadians(114)));
+    private final Pose shootPose2 = mirrorPose(new Pose(58.72, 11.89, Math.toRadians(112.5)));
     private final Pose pushStartPose = mirrorPose(new Pose(5, 25.316909294512882, Math.toRadians(270)));
     private final Pose pushEndPose = mirrorPose(new Pose(8.062709966405375, 9.83650615901455, Math.toRadians(270)));
     private final Pose shootPose3 = mirrorPose(new Pose(58.72, 11.89, Math.toRadians(123))); // Final shooting angle: 57 degrees (mirrored from 123)
