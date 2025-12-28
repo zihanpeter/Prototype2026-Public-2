@@ -60,13 +60,18 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     private final PIDController alignPID;
     
     // Auto-aim PID constants (tunable via Dashboard)
-    public static double kP_alignH = 0.03;       // P gain for auto-aim
+    public static double kP_alignH = 0.025;      // P gain for auto-aim
     public static double kI_alignH = 0;          // I gain for auto-aim
-    public static double kD_alignH = 0.003;      // D gain for auto-aim (slightly increased for damping)
+    public static double kD_alignH = 0.005;      // D gain for auto-aim (increased for damping)
+    public static double alignDeadbandNear = 4.0;  // Deadband for close shots (degrees)
+    public static double alignDeadbandFar = 0.5;  // Deadband for far shots (degrees)
     
     // Auto-aim offset constants
     public static double farDistanceThreshold = 94;  // Distance threshold for offset (inches)
     public static double farOffsetDegrees = 2.0;        // Offset in degrees for far shots
+    
+    // Current deadband (set based on distance)
+    private double currentDeadband = alignDeadbandNear;
     
     // Cached offset to prevent jitter (Mode 1: tx-based)
     private double currentOffset = 0;
@@ -429,26 +434,39 @@ public class MecanumDrivePinpoint extends SubsystemBase {
             // Get tx value (horizontal offset in degrees)
             double tx = vision.getTx();
             
-            // Distance-based offset compensation
+            // Distance-based offset and deadband compensation
             // Lock the offset once determined to prevent jitter
             if (!offsetLocked) {
                 double distance = vision.getDistanceToTag();
                 
                 if (distance > 0 && distance > farDistanceThreshold) {
-                    // Far shot: apply offset
+                    // Far shot: apply offset and use smaller deadband
                     if (tagId == Vision.BLUE_GOAL_TAG_ID) {
                         currentOffset = -farOffsetDegrees;  // Blue goal: offset left
                     } else {
                         currentOffset = farOffsetDegrees;   // Red goal: offset right
                     }
+                    currentDeadband = alignDeadbandFar;  // Far shot: tight deadband (0.5°)
                 } else {
                     currentOffset = 0;  // Close shot: no offset
+                    currentDeadband = alignDeadbandNear;  // Close shot: loose deadband (4°)
                 }
                 offsetLocked = true;  // Lock to prevent jitter
             }
             
+            // Calculate error
+            double targetTx = -currentOffset;
+            double error = Math.abs(tx - targetTx);
+            
+            // Apply deadband - if error is small enough, stop adjusting
+            // Uses distance-based deadband: far=0.5°, near=4°
+            if (error < currentDeadband) {
+                alignPID.reset();  // Reset PID to prevent integral windup
+                return 0;
+            }
+            
             // PID control to align tx to target offset
-            double turn = -alignPID.calculate(tx, -currentOffset);
+            double turn = -alignPID.calculate(tx, targetTx);
             return Math.max(-1, Math.min(1, turn));
             
         } else {
