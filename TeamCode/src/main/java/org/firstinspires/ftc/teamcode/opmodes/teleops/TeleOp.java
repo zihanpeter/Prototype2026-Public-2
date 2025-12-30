@@ -86,10 +86,20 @@ public class TeleOp extends CommandOpMode {
         
         // --- Auto-Aim Status ---
         boolean aPressed = gamepadEx1.getButton(GamepadKeys.Button.A);
-        boolean shootPressed = gamepadEx1.getButton(GamepadKeys.Button.LEFT_BUMPER) ||
-                               gamepadEx1.getButton(GamepadKeys.Button.RIGHT_BUMPER) ||
-                               gamepadEx1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= 0.3;
-        boolean shouldAlign = aPressed || shootPressed;
+        boolean shooterAccelerationPressed =
+                gamepadEx1.getButton(GamepadKeys.Button.LEFT_BUMPER) ||
+                        gamepadEx1.getButton(GamepadKeys.Button.RIGHT_BUMPER) ||
+                        gamepadEx1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= 0.3;
+        boolean feedPressed =
+                (gamepadEx1.getButton(GamepadKeys.Button.LEFT_BUMPER) ||
+                        gamepadEx1.getButton(GamepadKeys.Button.RIGHT_BUMPER) ||
+                        gamepadEx1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) >= 0.3) &&
+                        gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.3;
+        robot.intake.setShooting(feedPressed);
+        boolean intakeAccelerationPressed =
+                gamepadEx1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) >= 0.3;
+        robot.intake.setFastIntaking(intakeAccelerationPressed);
+        boolean shouldAlign = aPressed || shooterAccelerationPressed || feedPressed;
         
         int currentTagId = robot.vision.getDetectedTagId();
         boolean isGoalTag = (currentTagId == Vision.BLUE_GOAL_TAG_ID || currentTagId == Vision.RED_GOAL_TAG_ID);

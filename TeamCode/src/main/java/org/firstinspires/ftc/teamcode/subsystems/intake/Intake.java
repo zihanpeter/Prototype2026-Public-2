@@ -21,6 +21,7 @@ public class Intake extends SubsystemBase {
     public static boolean isFullPower = false;
     public static boolean isReversed = false;
     public static boolean isFastShooting = false; // For FAST shooting mode in auto
+    public static boolean isFastIntaking = false;
 
     /**
      * Constructor for Intake.
@@ -67,10 +68,9 @@ public class Intake extends SubsystemBase {
      * Toggles the shooting state flag.
      * When shooting, intake might need to run at a specific power (transitPower).
      */
-    public void toggleShooting() {
-        isShooting = !isShooting;
+    public void setShooting(boolean shooting) {
+        isShooting = shooting;
     }
-
     /**
      * Checks if the intake is in shooting mode.
      * @return True if shooting.
@@ -85,10 +85,13 @@ public class Intake extends SubsystemBase {
      *
      * @param fullPower True to enable full power.
      */
+
     public void setFullPower(boolean fullPower) {
         isFullPower = fullPower;
     }
-
+    public void setFastIntaking(boolean fastIntakePower) {
+        isFastIntaking = fastIntakePower;
+    }
     /**
      * Sets the reversed flag.
      * Used to reverse the intake direction (e.g., for ejecting).
@@ -126,9 +129,13 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         if (isRunning) {
             double targetPower;
-            
+
             // Priority: fastShooting > fullPower > standard
-            if (isFastShooting) {
+            if (isShooting) {
+                targetPower = IntakeConstants.transitPower; //1
+            } else if (isFastIntaking){
+                targetPower = IntakeConstants.fastIntakePower; // 0.7
+            } else if (isFastShooting) {
                 targetPower = IntakeConstants.fastShootingPower; // 0.8
             } else if (isFullPower) {
                 targetPower = IntakeConstants.fullPower; // 0.65
