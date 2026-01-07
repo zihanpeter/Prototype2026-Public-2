@@ -94,13 +94,23 @@ public class TeleOpDriveCommand extends CommandBase {
                 double strafe = -rawLeftX * Math.abs(rawLeftX);
                 
                 // Determine turn input
-                double turn = rawRightX * Math.abs(rawRightX);  // Manual always works
-                turn += dpadTurn;
+                double turn;
                 
                 if (shouldAlign) {
-                    // A or Shoot buttons: Add auto-aim to manual turn
-                    turn += drive.getAlignTurnPower(vision);
+                    // A or Shoot buttons: Use auto-aim only (no manual override)
+                    turn = drive.getAlignTurnPower(vision);
+                } else {
+                    // No auto-aim: use manual controls
+                    turn = rawRightX * Math.abs(rawRightX);
+                    turn += dpadTurn;
                 }
+                
+                // === Manual override commented out ===
+                // double turn = rawRightX * Math.abs(rawRightX);  // Manual always works
+                // turn += dpadTurn;
+                // if (shouldAlign) {
+                //     turn += drive.getAlignTurnPower(vision);
+                // }
                 
                 // Clamp turn to [-1, 1]
                 turn = Math.max(-1, Math.min(1, turn));

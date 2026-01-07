@@ -132,7 +132,9 @@ public class Shooter extends SubsystemBase {
      * @return Velocity in ticks per second.
      */
     public double getVelocity() {
-        return rightShooter.getVelocity();
+        // leftShooter runs positive, but target velocities are negative
+        // Return negative to match the convention
+        return -leftShooter.getVelocity();
     }
 
     /**
@@ -158,8 +160,9 @@ public class Shooter extends SubsystemBase {
         }
         
         // Check if current velocity is close to target velocity
+        // leftShooter runs positive, but targetVel is negative, so negate for comparison
         return Util.epsilonEqual(
-                rightShooter.getVelocity(),
+                -leftShooter.getVelocity(),
                 targetVel,
                 ShooterConstants.shooterEpsilon
         );
@@ -259,7 +262,8 @@ public class Shooter extends SubsystemBase {
     @Override
     public void periodic() {
         // Control loop runs always (even in STOP state) to maintain idle speed if set
-        double currentVel = rightShooter.getVelocity();
+        // leftShooter runs positive, but target velocities are negative, so negate
+        double currentVel = -leftShooter.getVelocity();
         
         // Use adaptive velocity if set, otherwise use state velocity
         double targetVel = (adaptiveVelocity != 0) ? adaptiveVelocity : shooterState.shooterVelocity;
