@@ -95,7 +95,7 @@ public class NewRedFar extends AutoCommandBase {
                 new InstantCommand(() -> intake.startIntake()),
 
                 // =========================================================
-                // Phase 1: JSON paths (执行一次，不循环)
+                // Phase 1: JSON paths (execute once, no loop)
                 // =========================================================
                 
                 // Path 1: Start -> Shoot Pose (Preload)
@@ -107,14 +107,14 @@ public class NewRedFar extends AutoCommandBase {
                 new AutoAlignCommand(follower, vision).withTimeout(1000),  // Auto-aim before shooting
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
-                // Path 2: Shoot -> Sample (曲线取球)
+                // Path 2: Shoot -> Sample (curve path to intake)
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.STOP);
                     intake.setFastShooting(false);
                 }),
                 new AutoDriveCommand(follower, path2_toSamplePose, 5000),
 
-                // Path 3: Sample -> Shoot (返回射球)
+                // Path 3: Sample -> Shoot (return to shoot)
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.FAST);
                     intake.setFastShooting(true);
@@ -124,7 +124,7 @@ public class NewRedFar extends AutoCommandBase {
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // Phase 2: RedFar loop (无限循环)
+                // Phase 2: RedFar loop (infinite loop)
                 // =========================================================
                 redFarLoop
         );

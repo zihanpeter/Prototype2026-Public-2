@@ -54,7 +54,7 @@ public class BlueFar extends AutoCommandBase {
     public Command runAutoCommand() {
         buildPaths();
 
-        // 单次循环序列：往返1次 + 射击
+        // Single cycle sequence: 1 round trip + shoot
         Command pushAndShootCycle = new SequentialCommandGroup(
                 // Path 2: Shoot Pose -> Sample 1
                 new InstantCommand(() -> {

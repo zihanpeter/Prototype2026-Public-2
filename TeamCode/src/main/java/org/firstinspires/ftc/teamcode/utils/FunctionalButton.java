@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.utils;
 
+/**
+ * Custom Button that takes a BooleanSupplier for flexible trigger conditions.
+ * Allows combining multiple gamepad inputs into a single button.
+ */
+
 import com.arcrobotics.ftclib.command.button.Button;
 
 import java.util.function.BooleanSupplier;

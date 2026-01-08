@@ -38,9 +38,9 @@ public class ShooterConstants {
     public static double brakeReleaseThresholdTPS = -680;
     
     public static double stopVelocity = -600;  // Legacy, used for reference only
-    public static double fastVelocity = -1420; // Updated for 6000RPM motor (~75% power)
-    public static double midVelocity = -1150;  // Updated for mid-range shots (~46% power)
-    public static double slowVelocity = -900;  // Low speed for close/safe shots (~21% power)
+    public static double fastVelocity = -1420; // Far shots (128.4") (~51% power)
+    public static double midVelocity = -950;   // Mid-range shots (77.4") (~34% power)
+    public static double slowVelocity = -700;  // Close shots (24.4") (~25% power)
     public static double releaseVelocity = -200; // Threshold to consider "stopped" or "too slow"
     
     // Velocity tolerances for transit engagement (ticks per second)
@@ -82,9 +82,11 @@ public class ShooterConstants {
     public static double redGoalX = 140;
     public static double redGoalY = 140;
     
-    // Distance range for velocity interpolation
-    public static double nearDistance = 60;   // Distance for slowVelocity
-    public static double farDistance = 120;   // Distance for fastVelocity
+    // Distance range for velocity interpolation (calibrated from real data)
+    // Near: 24.4" -> 700 TPS, Mid: 77.4" -> 950 TPS, Far: 128.4" -> 1420 TPS
+    public static double nearDistance = 24.4;   // Distance for slowVelocity (700 TPS)
+    public static double midDistance = 77.4;    // Distance for midVelocity (950 TPS)
+    public static double farDistance = 128.4;   // Distance for fastVelocity (1420 TPS)
     
     // Distance range for servo angle interpolation (non-linear)
     public static double servoNearDistance = 25;   // Distance for shooterServoDownPos (0.85)

@@ -1,5 +1,9 @@
 package org.firstinspires.ftc.teamcode.utils;
 
+/**
+ * Converter from FTC SDK Pose2D to Pedro Pathing Pose.
+ */
+
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;

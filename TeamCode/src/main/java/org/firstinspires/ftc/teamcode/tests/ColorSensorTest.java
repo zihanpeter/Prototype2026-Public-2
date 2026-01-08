@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.tests;
 
+/**
+ * Color Sensor Test OpMode.
+ * For testing and calibrating the REV Color/Distance sensor.
+ */
+
 import android.app.Activity;
 import android.graphics.Color;
 import android.view.View;

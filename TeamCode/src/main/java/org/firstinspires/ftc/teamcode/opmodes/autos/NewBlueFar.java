@@ -92,7 +92,7 @@ public class NewBlueFar extends AutoCommandBase {
                 new InstantCommand(() -> intake.startIntake()),
 
                 // =========================================================
-                // Phase 1: JSON paths (执行一次，不循环)
+                // Phase 1: JSON paths (execute once, no loop)
                 // =========================================================
                 
                 // Path 1: Start -> Shoot Pose (Preload)
@@ -119,7 +119,7 @@ public class NewBlueFar extends AutoCommandBase {
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // Phase 2: BlueFar loop (无限循环)
+                // Phase 2: BlueFar loop (infinite loop)
                 // =========================================================
                 blueFarLoop
         );

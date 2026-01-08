@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.utils;
 
+/**
+ * General utility functions.
+ * Includes vision pose conversion, deadband processing, and epsilon comparison.
+ */
+
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.geometry.Pose;
 

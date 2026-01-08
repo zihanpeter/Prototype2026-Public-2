@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.test;
 
+/**
+ * Path Tuner OpMode.
+ * Visualizes auto paths on Panels Dashboard for path debugging and tuning.
+ */
+
 import com.bylazar.field.FieldManager;
 import com.bylazar.field.PanelsField;
 import com.bylazar.field.Style;

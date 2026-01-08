@@ -52,7 +52,7 @@ public class RedFar extends AutoCommandBase {
     public Command runAutoCommand() {
         buildPaths();
 
-        // 循环序列：往返1次 + 射击（无限重复）
+        // Loop sequence: 1 round trip + shoot (infinite repeat)
         Command pushAndShootLoop = new RepeatCommand(
                 new SequentialCommandGroup(
                         // Path 2: Shoot Pose -> Sample 1
@@ -97,7 +97,7 @@ public class RedFar extends AutoCommandBase {
                 new TransitCommand(transit, shooter).withTimeout(1300),
 
                 // =========================================================
-                // 2-6. Infinite Loop: 往返2次 + 射击
+                // 2-6. Infinite Loop: 2 round trips + shoot
                 // =========================================================
                 pushAndShootLoop
         );

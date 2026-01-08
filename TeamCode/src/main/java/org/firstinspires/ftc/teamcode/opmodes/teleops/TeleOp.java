@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.opmodes.teleops;
 
+/**
+ * Main TeleOp OpMode.
+ * Field-centric Mecanum drive with auto-aim, adaptive shooting, and comprehensive telemetry.
+ */
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -144,10 +149,12 @@ public class TeleOp extends CommandOpMode {
             
             double distToGoal = robot.drive.distanceToGoal(currentTagId);
             double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(currentTagId);
+            String segment = robot.drive.getAdaptiveSegment(currentTagId);
             double tx = robot.vision.getTx();
             boolean canFire = robot.drive.isAutoFireAllowed(tx);
             
             telemetry.addData("Distance to Goal", String.format("%.2f in", distToGoal));
+            telemetry.addData("Segment", segment);
             telemetry.addData("Adaptive Velocity", String.format("%.0f TPS", adaptiveVelocity));
             telemetry.addData("tx", String.format("%.2f°", tx));
             telemetry.addData("CAN FIRE", canFire ? "YES (|tx| < 0.3°)" : "NO (align first)");

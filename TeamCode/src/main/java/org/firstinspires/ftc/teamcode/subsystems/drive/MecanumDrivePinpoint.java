@@ -743,21 +743,57 @@ public class MecanumDrivePinpoint extends SubsystemBase {
             return ShooterConstants.midVelocity;
         }
         
-        // Clamp distance to range
+        // Piecewise linear interpolation based on calibrated data:
+        // Near: 24.4" -> 700 TPS, Mid: 77.4" -> 950 TPS, Far: 128.4" -> 1420 TPS
+        
         if (distance <= ShooterConstants.nearDistance) {
+            // Closer than near distance, use slow velocity
             return ShooterConstants.slowVelocity;
         }
         if (distance >= ShooterConstants.farDistance) {
+            // Further than far distance, use fast velocity
             return ShooterConstants.fastVelocity;
         }
         
-        // Linear interpolation
-        // velocity = slow + (fast - slow) * (distance - near) / (far - near)
-        double ratio = (distance - ShooterConstants.nearDistance) 
-                     / (ShooterConstants.farDistance - ShooterConstants.nearDistance);
+        if (distance < ShooterConstants.midDistance) {
+            // Between near and mid: interpolate slow -> mid
+            double ratio = (distance - ShooterConstants.nearDistance) 
+                         / (ShooterConstants.midDistance - ShooterConstants.nearDistance);
+            return ShooterConstants.slowVelocity 
+                 + (ShooterConstants.midVelocity - ShooterConstants.slowVelocity) * ratio;
+        } else {
+            // Between mid and far: interpolate mid -> fast
+            double ratio = (distance - ShooterConstants.midDistance) 
+                         / (ShooterConstants.farDistance - ShooterConstants.midDistance);
+            return ShooterConstants.midVelocity 
+                 + (ShooterConstants.fastVelocity - ShooterConstants.midVelocity) * ratio;
+        }
+    }
+    
+    /**
+     * Gets the current adaptive velocity segment name based on distance.
+     * @param tagId The detected tag ID
+     * @return Segment name: "NEAR", "NEAR→MID", "MID→FAR", "FAR", or "UNKNOWN"
+     */
+    public String getAdaptiveSegment(int tagId) {
+        double distance = distanceToGoal(tagId);
         
-        return ShooterConstants.slowVelocity 
-             + (ShooterConstants.fastVelocity - ShooterConstants.slowVelocity) * ratio;
+        if (distance < 0) {
+            return "UNKNOWN";
+        }
+        
+        if (distance <= ShooterConstants.nearDistance) {
+            return "NEAR (≤24.4\")";
+        }
+        if (distance >= ShooterConstants.farDistance) {
+            return "FAR (≥128.4\")";
+        }
+        
+        if (distance < ShooterConstants.midDistance) {
+            return "NEAR→MID (24.4\"~77.4\")";
+        } else {
+            return "MID→FAR (77.4\"~128.4\")";
+        }
     }
     
     /**

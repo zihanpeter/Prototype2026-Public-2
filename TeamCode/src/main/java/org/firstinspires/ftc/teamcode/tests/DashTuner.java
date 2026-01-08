@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.tests;
 
+/**
+ * Dashboard Tuner OpMode.
+ * For tuning shooter PID, servo positions, and other parameters via FTC Dashboard.
+ */
+
 import android.graphics.Color;
 
 import com.acmerobotics.dashboard.FtcDashboard;

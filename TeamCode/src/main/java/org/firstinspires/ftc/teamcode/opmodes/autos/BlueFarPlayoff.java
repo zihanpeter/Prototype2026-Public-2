@@ -68,7 +68,7 @@ public class BlueFarPlayoff extends AutoCommandBase {
                 new InstantCommand(() -> shooter.setShooterState(Shooter.ShooterState.STOP)),
 
                 // =========================================================
-                // Path 2: Shoot Pose 1 -> Push Start (直接去推球)
+                // Path 2: Shoot Pose 1 -> Push Start (go to push position)
                 // =========================================================
                 new InstantCommand(() -> {
                     shooter.setShooterState(Shooter.ShooterState.STOP);
