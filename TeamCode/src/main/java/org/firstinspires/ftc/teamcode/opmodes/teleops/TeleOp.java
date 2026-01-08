@@ -65,7 +65,7 @@ public class TeleOp extends CommandOpMode {
                 new InstantCommand(() -> robot.drive.resetHeading())
         );
 
-        DriverControls.bind(gamepadEx1, robot);
+        DriverControls.bind(gamepadEx1, robot, isAuto);
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
     }
 

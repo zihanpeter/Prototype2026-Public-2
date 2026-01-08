@@ -178,9 +178,13 @@ Why not PID? Flywheel momentum makes PID oscillate. Bang-Bang converges faster.
 
 #### Adaptive Shooting | 自适应发射
 
-Automatically calculates velocity based on distance to goal:
+Automatically calculates velocity based on distance to goal.
 
-根据到目标的距离自动计算转速：
+根据到目标的距离自动计算转速。
+
+**Requirements | 要求:**
+- Must see Goal Tag (ID 20 or 24) to activate | 必须看到目标标签（ID 20 或 24）才能启用
+- Chassis is disabled during adaptive shooting | 自适应发射期间底盘被禁用
 
 | Distance | Velocity | 距离 | 转速 |
 |----------|----------|------|------|
@@ -532,8 +536,8 @@ All `@Config` annotated classes can be tuned in real-time:
 | **RT** | Fast shot (1420 TPS) + Auto-aim | 远射 + 自瞄 |
 | **LT** | Full power intake + Transit fire | 全功率进球 + 发射 |
 | **A** | Auto-aim only (no shoot) | 仅自瞄（不发射） |
-| **X** | Adaptive fire (Blue goal) | 自适应发射（蓝方目标） |
-| **B** | Adaptive fire (Red goal) | 自适应发射（红方目标） |
+| **X** | Adaptive fire (Blue goal) - requires Goal Tag visible, disables chassis | 自适应发射（蓝方）- 需看到目标标签，禁用底盘 |
+| **B** | Adaptive fire (Red goal) - requires Goal Tag visible, disables chassis | 自适应发射（红方）- 需看到目标标签，禁用底盘 |
 | **D-Pad Up** | Reverse intake | 反转进球 |
 | **D-Pad Down** | Manual brake | 手动刹车 |
 | **D-Pad L/R** | Fine rotation | 微调转向 |
@@ -734,6 +738,7 @@ All `@Config` annotated classes can be tuned in real-time:
 | **Wrong velocity for distance | 距离对应转速错误** | Calibration data | Update distance/velocity constants | `ShooterConstants.java` → `nearDistance`, `midDistance`, `farDistance` |
 | **Brake doesn't engage | 刹车不接合** | Servo position wrong | Adjust `brakeServoEngagedPos` | `ShooterConstants.java` → brake positions |
 | **Servo angle wrong | 舵机角度错误** | Servo position values | Adjust `shooterServoDownPos/MidPos/UpPos` | `ShooterConstants.java` → servo positions |
+| **Adaptive X/B not working | X/B自适应不工作** | No Goal Tag visible (ID 20/24) | Aim at goal tag first | `DriverControls.java` → X/B button logic |
 
 | 问题 | 可能原因 | 解决方案 | 文件 & 方法 |
 |------|----------|----------|-------------|
@@ -743,6 +748,7 @@ All `@Config` annotated classes can be tuned in real-time:
 | **距离对应转速错误** | 校准数据 | 更新距离/转速常量 | `ShooterConstants.java` → 距离常量 |
 | **刹车不接合** | 舵机位置错误 | 调整 `brakeServoEngagedPos` | `ShooterConstants.java` → 刹车位置 |
 | **舵机角度错误** | 舵机位置值 | 调整舵机位置常量 | `ShooterConstants.java` → 舵机位置 |
+| **X/B自适应不工作** | 看不到目标标签(ID 20/24) | 先瞄准目标标签 | `DriverControls.java` → X/B 按键逻辑 |
 
 ### 10.3 Vision Issues | 视觉问题
 
