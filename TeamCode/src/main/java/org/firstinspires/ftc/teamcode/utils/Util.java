@@ -34,6 +34,28 @@ public class Util {
     }
     
     /**
+     * Normalizes an angle in degrees to the range [-180, 180].
+     * @param angle Angle in degrees.
+     * @return Normalized angle in degrees.
+     */
+    public static double normalizeAngleDegrees(double angle) {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
+    }
+    
+    /**
+     * Normalizes an angle in radians to the range [-π, π].
+     * @param angle Angle in radians.
+     * @return Normalized angle in radians.
+     */
+    public static double normalizeAngleRadians(double angle) {
+        while (angle > Math.PI) angle -= 2 * Math.PI;
+        while (angle < -Math.PI) angle += 2 * Math.PI;
+        return angle;
+    }
+    
+    /**
      * Converts Limelight Pose3D (meters, field-space) to Pinpoint Pose2D (inches).
      * Uses configurable offsets and axis swapping for easy tuning.
      *

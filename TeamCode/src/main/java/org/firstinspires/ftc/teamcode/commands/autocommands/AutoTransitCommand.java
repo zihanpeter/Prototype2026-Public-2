@@ -8,6 +8,7 @@ import org.firstinspires.ftc.teamcode.subsystems.intake.Intake;
 import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
 import org.firstinspires.ftc.teamcode.subsystems.transit.Transit.TransitState;
+import org.firstinspires.ftc.teamcode.utils.Util;
 
 /**
  * Command to control transit in autonomous with position and velocity checks.
@@ -60,15 +61,9 @@ public class AutoTransitCommand extends CommandBase {
 
         double currentHeading = Math.toDegrees(currentPose.getHeading());
         double targetHeading = Math.toDegrees(targetPose.getHeading());
-        double headingError = Math.abs(normalizeAngle(currentHeading - targetHeading));
+        double headingError = Math.abs(Util.normalizeAngleDegrees(currentHeading - targetHeading));
 
         return distance <= POSITION_TOLERANCE && headingError <= HEADING_TOLERANCE;
-    }
-
-    private double normalizeAngle(double angle) {
-        while (angle > 180) angle -= 360;
-        while (angle < -180) angle += 360;
-        return angle;
     }
 
     @Override

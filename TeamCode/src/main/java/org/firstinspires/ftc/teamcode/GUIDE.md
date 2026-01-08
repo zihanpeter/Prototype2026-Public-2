@@ -1,7 +1,7 @@
 # Prototype2026-Public-2 Operation Guide | 操作指南
 
 > **Bilingual Technical Documentation | 中英双语技术文档**  
-> FTC Team 12527 | Last Updated: 2026-01
+> FTC Team 12527 | Last Updated: 2026-01-08
 
 ---
 
@@ -304,7 +304,6 @@ public class ExampleCommand extends CommandBase {
 |---------|----------|------|
 | `TeleOpDriveCommand` | Field-centric drive + auto-aim | 场地坐标系驾驶 + 自瞄 |
 | `TransitCommand` | Fire when shooter ready | 转速就绪时发射 |
-| `IntakeCommand` | Manual intake control | 手动进球控制 |
 
 ### Auto Commands | 自动命令
 
@@ -324,8 +323,8 @@ public class ExampleCommand extends CommandBase {
 ```
 TeleOp.java
     │
-    ├── Robot.java (Container)
-    │   ├── MecanumDrivePinpoint
+    ├── Robot.java (TeleOp Container - NOT for Auto!)
+    │   ├── MecanumDrivePinpoint  ← Only in TeleOp | 仅手动模式
     │   ├── Shooter
     │   ├── Transit
     │   ├── Intake
@@ -482,7 +481,7 @@ When no joystick input:
 ```java
 double errorX = targetX - currentX;
 double errorY = targetY - currentY;
-double errorH = angleWrap(targetH - currentH);
+double errorH = Util.normalizeAngleRadians(targetH - currentH);
 
 moveRobotFieldRelative(
     kP_XY * errorY,
@@ -698,6 +697,8 @@ All `@Config` annotated classes can be tuned in real-time:
 |--------|-------------|------|
 | `Pose2DToPose(pose2d)` | Convert Pose2D to Pose | 转换Pose2D到Pose |
 | `epsilonEqual(a, b, epsilon)` | Compare with tolerance | 带容差比较 |
+| `normalizeAngleDegrees(angle)` | Normalize angle to [-180, 180] | 归一化角度到[-180, 180] |
+| `normalizeAngleRadians(angle)` | Normalize angle to [-π, π] | 归一化角度到[-π, π] |
 | `visionPoseToPinpointPose(pose3d)` | Convert Limelight pose | 转换Limelight位姿 |
 | `debugVisionConversion(pose3d)` | Debug conversion steps | 调试转换步骤 |
 

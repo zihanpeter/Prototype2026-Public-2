@@ -9,9 +9,15 @@ import org.firstinspires.ftc.teamcode.subsystems.transit.Transit;
 import org.firstinspires.ftc.teamcode.subsystems.vision.Vision;
 
 /**
- * Robot Hardware Container.
- * Initializes and holds references to all robot subsystems.
- * Simplifies dependency injection in OpModes.
+ * Robot Hardware Container for TeleOp.
+ * Initializes and holds references to all robot subsystems including MecanumDrivePinpoint.
+ * 
+ * NOTE: This class is intended for TeleOp only!
+ * For Autonomous, use AutoCommandBase instead, which:
+ * - Uses Follower (Pedro Pathing) instead of MecanumDrivePinpoint
+ * - Does NOT reset Pinpoint odometry to avoid conflicts with Follower
+ * 
+ * @see org.firstinspires.ftc.teamcode.opmodes.autos.AutoCommandBase
  */
 public class Robot {
     public final MecanumDrivePinpoint drive;

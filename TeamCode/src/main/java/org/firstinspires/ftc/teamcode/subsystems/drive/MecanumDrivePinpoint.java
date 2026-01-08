@@ -326,15 +326,6 @@ public class MecanumDrivePinpoint extends SubsystemBase {
     }
     
     /**
-     * Wraps an angle to the range [-π, π].
-     */
-    private double angleWrap(double angle) {
-        while (angle > Math.PI) angle -= 2 * Math.PI;
-        while (angle < -Math.PI) angle += 2 * Math.PI;
-        return angle;
-    }
-
-    /**
      * Calculates the angle from the robot's current position to the target position.
      * 
      * @param targetX Target X coordinate in inches.
@@ -587,17 +578,11 @@ public class MecanumDrivePinpoint extends SubsystemBase {
             return false;
         }
         
-        // Convert Limelight Pose3D to field coordinates
-        // Limelight coordinate system: origin at field center, range -72 to +72 inches
-        // Field coordinate system: origin at field corner, range 0 to 144 inches
-        // Conversion formula (from Prototype2026-Public):
-        //   fieldX = limelightY (meters to inches) + 72
-        //   fieldY = -limelightX (meters to inches) + 72
-        //   fieldHeading = yaw (degrees to radians) - π/2
-        double metersToInches = 39.3701;
-        absoluteX = visionPose.getPosition().y * metersToInches + 72;
-        absoluteY = -visionPose.getPosition().x * metersToInches + 72;
-        absoluteHeading = Math.toRadians(visionPose.getOrientation().getYaw()) - Math.PI / 2;
+        // Convert Limelight Pose3D to field coordinates using shared utility
+        Pose2D convertedPose = Util.visionPoseToPinpointPose(visionPose);
+        absoluteX = convertedPose.getX(DistanceUnit.INCH);
+        absoluteY = convertedPose.getY(DistanceUnit.INCH);
+        absoluteHeading = convertedPose.getHeading(AngleUnit.RADIANS);
         
         hasAbsolutePosition = true;
         
@@ -638,7 +623,7 @@ public class MecanumDrivePinpoint extends SubsystemBase {
         absoluteHeading += deltaHeading;
         
         // Normalize heading to [-π, π]
-        absoluteHeading = angleWrap(absoluteHeading);
+        absoluteHeading = Util.normalizeAngleRadians(absoluteHeading);
         
         // Update lastOdoPose
         lastOdoPose = currentOdoPose;
