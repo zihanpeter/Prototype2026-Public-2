@@ -1,5 +1,10 @@
 package org.firstinspires.ftc.teamcode.tests;
 
+/**
+ * Pedro Pathing Tuner.
+ * From Panels Dashboard - provides path tuning and visualization.
+ */
+
 import static org.firstinspires.ftc.teamcode.tests.Tuning.changes;
 import static org.firstinspires.ftc.teamcode.tests.Tuning.drawOnlyCurrent;
 import static org.firstinspires.ftc.teamcode.tests.Tuning.draw;
