@@ -19,8 +19,8 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Autonomous OpMode for the Blue Alliance Far side (Playoff version).
  * Simplified: removed intake detour, goes directly to push after first shot.
  */
-@Autonomous(name = "Blue Far Playoff", group = "Far")
-public class BlueFarPlayoff extends AutoCommandBase {
+@Autonomous(name = "Blue Far 24599", group = "Far")
+public class BlueFar24599 extends AutoCommandBase {
 
     // Path chains (5 paths)
     private PathChain path1_toShootPose;

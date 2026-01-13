@@ -20,8 +20,8 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Mirrored from BlueFarPlayoff.
  * Simplified: removed intake detour, goes directly to push after first shot.
  */
-@Autonomous(name = "Red Far Playoff", group = "Far")
-public class RedFarPlayoff extends AutoCommandBase {
+@Autonomous(name = "Red Far 24599", group = "Far")
+public class RedFar24599 extends AutoCommandBase {
 
     // Field dimensions for mirroring
     private static final double FIELD_WIDTH = 144.0;
