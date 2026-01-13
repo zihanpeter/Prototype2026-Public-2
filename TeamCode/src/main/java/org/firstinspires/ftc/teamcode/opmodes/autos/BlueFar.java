@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  * Mirrored from RedFar (X=72 axis).
  * 6 paths (3 push cycles), all BezierLine (straight lines).
  */
-@Autonomous(name = "Blue Far Auto", group = "Far")
+@Autonomous(name = "Blue Far", group = "Far")
 public class BlueFar extends AutoCommandBase {
 
     // Path chains (6 paths - 1 push cycle per loop + park)

@@ -23,8 +23,8 @@ import org.firstinspires.ftc.teamcode.subsystems.shooter.Shooter;
  *   newY = oldY
  *   newHeading = 180° - oldHeading
  */
-@Autonomous(name = "Red Near Auto", group = "Near")
-public class RedNear extends AutoCommandBase {
+@Autonomous(name = "Red Near One", group = "Near")
+public class RedNearOne extends AutoCommandBase {
 
     // Path chains (9 paths now - added parking)
     private PathChain path1_toShootPose;
