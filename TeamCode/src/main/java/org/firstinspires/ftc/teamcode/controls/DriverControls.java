@@ -17,6 +17,11 @@ import org.firstinspires.ftc.teamcode.utils.FunctionalButton;
  * Centralizes the gamepad button bindings for the robot.
  */
 public class DriverControls {
+    
+    // Cached adaptive values (calculated once on press, used every frame while held)
+    private static double cachedAdaptiveVelocity = 0;
+    private static double cachedAdaptiveServoPos = -1;
+    private static boolean adaptiveCalculated = false;
 
     /**
      * Binds the gamepad controls to the robot commands.
@@ -126,28 +131,39 @@ public class DriverControls {
         // NOTE: Adaptive shooting ONLY works when a Goal Tag (ID 20 or 24) is visible!
         
         // X Button - BLUE Goal (only if seeing Goal Tag)
+        // Calculate ONCE when pressed, apply every frame while held
         new FunctionalButton(
                 () -> gamepad.getButton(GamepadKeys.Button.X)
-        ).whenHeld(
+        ).whenPressed(
+                // Calculate only once when button is first pressed
                 new InstantCommand(() -> {
                     int currentTag = robot.vision.getDetectedTagId();
                     boolean isGoalTag = (currentTag == Vision.BLUE_GOAL_TAG_ID || currentTag == Vision.RED_GOAL_TAG_ID);
                     
                     if (isGoalTag) {
+                        // Calculate and cache adaptive values (only once!)
+                        cachedAdaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.BLUE_GOAL_TAG_ID);
+                        cachedAdaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.BLUE_GOAL_TAG_ID);
+                        adaptiveCalculated = true;
+                    } else {
+                        adaptiveCalculated = false;
+                    }
+                })
+        ).whenHeld(
+                // Apply cached values every frame while held
+                new InstantCommand(() -> {
+                    if (adaptiveCalculated) {
                         isAuto[0] = true;  // Disable chassis during adaptive shooting
                         robot.drive.stop();  // Stop chassis immediately
                         robot.shooter.cancelAutoBrakeCycle();  // Cancel brake
-                        // Calculate adaptive velocity and servo position based on distance to BLUE goal
-                        double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.BLUE_GOAL_TAG_ID);
-                        double adaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.BLUE_GOAL_TAG_ID);
-                        robot.shooter.setAdaptiveVelocity(adaptiveVelocity);
-                        robot.shooter.setAdaptiveServoPosition(adaptiveServoPos);
+                        robot.shooter.setAdaptiveVelocity(cachedAdaptiveVelocity);
+                        robot.shooter.setAdaptiveServoPosition(cachedAdaptiveServoPos);
                     }
-                    // If no Goal Tag visible, do nothing (adaptive disabled)
                 })
         ).whenReleased(
                 new InstantCommand(() -> {
                     isAuto[0] = false;  // Re-enable chassis
+                    adaptiveCalculated = false;  // Reset flag
                     robot.shooter.setShooterState(Shooter.ShooterState.STOP);
                     robot.shooter.startAutoBrakeCycle();  // Start brake when releasing
                 })
@@ -165,28 +181,39 @@ public class DriverControls {
         );
         
         // B Button - RED Goal (only if seeing Goal Tag)
+        // Calculate ONCE when pressed, apply every frame while held
         new FunctionalButton(
                 () -> gamepad.getButton(GamepadKeys.Button.B)
-        ).whenHeld(
+        ).whenPressed(
+                // Calculate only once when button is first pressed
                 new InstantCommand(() -> {
                     int currentTag = robot.vision.getDetectedTagId();
                     boolean isGoalTag = (currentTag == Vision.BLUE_GOAL_TAG_ID || currentTag == Vision.RED_GOAL_TAG_ID);
                     
                     if (isGoalTag) {
+                        // Calculate and cache adaptive values (only once!)
+                        cachedAdaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.RED_GOAL_TAG_ID);
+                        cachedAdaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.RED_GOAL_TAG_ID);
+                        adaptiveCalculated = true;
+                    } else {
+                        adaptiveCalculated = false;
+                    }
+                })
+        ).whenHeld(
+                // Apply cached values every frame while held
+                new InstantCommand(() -> {
+                    if (adaptiveCalculated) {
                         isAuto[0] = true;  // Disable chassis during adaptive shooting
                         robot.drive.stop();  // Stop chassis immediately
                         robot.shooter.cancelAutoBrakeCycle();  // Cancel brake
-                        // Calculate adaptive velocity and servo position based on distance to RED goal
-                        double adaptiveVelocity = robot.drive.calculateAdaptiveVelocity(Vision.RED_GOAL_TAG_ID);
-                        double adaptiveServoPos = robot.drive.calculateAdaptiveServoPosition(Vision.RED_GOAL_TAG_ID);
-                        robot.shooter.setAdaptiveVelocity(adaptiveVelocity);
-                        robot.shooter.setAdaptiveServoPosition(adaptiveServoPos);
+                        robot.shooter.setAdaptiveVelocity(cachedAdaptiveVelocity);
+                        robot.shooter.setAdaptiveServoPosition(cachedAdaptiveServoPos);
                     }
-                    // If no Goal Tag visible, do nothing (adaptive disabled)
                 })
         ).whenReleased(
                 new InstantCommand(() -> {
                     isAuto[0] = false;  // Re-enable chassis
+                    adaptiveCalculated = false;  // Reset flag
                     robot.shooter.setShooterState(Shooter.ShooterState.STOP);
                     robot.shooter.startAutoBrakeCycle();  // Start brake when releasing
                 })
